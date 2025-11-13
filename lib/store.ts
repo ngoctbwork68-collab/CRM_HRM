@@ -224,56 +224,19 @@ export const useAppStore = create<AppState>()(
       register: async (email, password, name, org_id) => {
         try {
           set({ isLoading: true })
-          const response = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, name, org_id }),
-          })
 
-          let bodyText = null
-          try {
-            bodyText = await response.clone().text()
-          } catch (e) {
-            console.warn("Failed to clone register response body:", e)
-          }
+          // Import and call Server Action
+          const { registerAction } = await import("@/app/actions/auth-actions")
+          const result = await registerAction(email, password, name, org_id)
 
-          if (!response.ok) {
-            console.error(`Registration failed: status=${response.status} ${response.statusText}`)
-            if (bodyText) {
-              try {
-                console.error("Registration response body:", JSON.parse(bodyText))
-              } catch (e) {
-                console.error("Registration response body (text):", bodyText)
-              }
-            }
+          if (!result.success) {
+            console.error("Registration failed:", result.error)
             return false
           }
 
-          let data: any = {}
-          try {
-            data = await response.json()
-          } catch (e) {
-            try {
-              data = bodyText ? JSON.parse(bodyText) : {}
-            } catch (err) {
-              console.warn("Couldn't parse register response JSON, falling back to empty object", err)
-              data = {}
-            }
-          }
-
-          // Registration succeeded. Backend may not return a full session/user.
-          // Do NOT auto-authenticate the user here; require explicit login or callback flow.
-          if (response.status === 201 || response.status === 200) {
-            console.info("Registration successful")
-            return true
-          }
-
-          // If backend returned a user (some flows might), keep it but do not set isAuthenticated
-          const { user } = data || {}
-          if (user) {
-            set({ user })
-          }
-
+          // Registration successful - do NOT auto-authenticate
+          // User must log in explicitly after registration
+          console.info("Registration successful:", result.message)
           return true
         } catch (error) {
           console.error("Registration error:", error)
