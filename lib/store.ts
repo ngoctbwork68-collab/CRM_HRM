@@ -226,7 +226,7 @@ export const useAppStore = create<AppState>()(
           set({ isLoading: true })
 
           // Import and call Server Action
-          const { registerAction } = await import("@/app/actions/auth-actions")
+          const { registerAction, loginAction } = await import("@/app/actions/auth-actions")
           const result = await registerAction(email, password, name, org_id)
 
           if (!result.success) {
@@ -234,9 +234,16 @@ export const useAppStore = create<AppState>()(
             return false
           }
 
-          // Registration successful - do NOT auto-authenticate
-          // User must log in explicitly after registration
-          console.info("Registration successful:", result.message)
+          // Registration successful - now auto-login the user
+          const loginResult = await loginAction(email, password)
+
+          if (loginResult.success && loginResult.user) {
+            set({ user: loginResult.user, isAuthenticated: true })
+            console.info("Registration and login successful")
+            return true
+          }
+
+          console.info("Registration successful but auto-login failed - user needs to login manually")
           return true
         } catch (error) {
           console.error("Registration error:", error)
