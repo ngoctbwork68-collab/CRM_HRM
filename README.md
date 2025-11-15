@@ -1,6 +1,6 @@
 <div align="center">
   
-# 🍇 HRMCRM
+# 🍇 HRM CRM
 
 ### Enterprise Resource Management Platform
 
@@ -37,7 +37,7 @@
 
 ## 🎯 Overview
 
-**HRMCRM** is a comprehensive Enterprise Resource Management platform designed to streamline internal business operations. Built with modern technologies and focused on real-world data handling, it provides a centralized solution for:
+**HRM CRM** is a comprehensive Enterprise Resource Management platform designed to streamline internal business operations. Built with modern technologies and focused on real-world data handling, it provides a centralized solution for:
 
 - 👥 **Organization Management** - Teams, departments, and user hierarchy
 - ⏰ **Attendance Tracking** - Real-time check-in/check-out with shift management

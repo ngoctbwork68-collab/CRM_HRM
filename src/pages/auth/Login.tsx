@@ -104,7 +104,7 @@ const Login = () => {
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-medium">
               <Grape className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-3xl font-heading font-bold">HRMCRM</h1>
+            <h1 className="text-3xl font-heading font-bold">HRM CRM</h1>
           </div>
           <p className="text-muted-foreground">Enterprise Resource Management</p>
         </div>
@@ -164,7 +164,7 @@ const Login = () => {
               <form onSubmit={handleSignup}>
                 <CardContent className="space-y-4">
                   <CardTitle>Create Account</CardTitle>
-                  <CardDescription>Sign up to get started with HRMCRM</CardDescription>
+                  <CardDescription>Sign up to get started with HRM CRM</CardDescription>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

@@ -110,7 +110,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
               <Grape className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-heading font-bold">HRMCRM</h1>
+              <h1 className="text-xl font-heading font-bold">HRM CRM</h1>
               <p className="text-xs text-muted-foreground capitalize">{userRole} Dashboard</p>
             </div>
           </div>
