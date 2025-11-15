@@ -1,301 +1,388 @@
-# Life OS - Enterprise Life Management System
+<div align="center">
+  
+# 🍇 Vine CRM
 
-A comprehensive enterprise management system built with Next.js 15, TypeScript, and modern web technologies.
+### Enterprise Resource Management Platform
 
-## Features
+*Modern, Powerful, and Intelligent CRM System for Internal Business Operations*
 
-- **Role-Based Access Control (RBAC)** - 4 distinct roles with specific permissions
-- **Attendance Tracking** - Real-time check-in/out with working hours calculation
-- **Task Management** - Kanban board and list views with priority management
-- **Calendar & Scheduling** - Event management with multiple view modes
-- **Note-Taking** - Personal, team, and organization-wide notes
-- **Room Booking** - Resource management with availability tracking
-- **Approval Workflows** - Leave requests and approval system
-- **Media Player** - Persistent Spotify/YouTube/Pomodoro integration
-- **Multi-language** - Vietnamese and English support
-- **Dark/Light Mode** - Beautiful theme system with vibrant colors
-- **Mobile Responsive** - Optimized for all screen sizes
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-## Tech Stack
+[🚀 Demo](https://lovable.dev/projects/f69f86c8-a387-4d19-b189-642e8f36a015) • [📖 Documentation](#) • [🐛 Report Bug](#) • [✨ Request Feature](#)
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: TailwindCSS v4
-- **UI Components**: shadcn/ui
-- **Animations**: Framer Motion
-- **State Management**: Zustand
-- **Internationalization**: i18next
-- **Icons**: Lucide React
-
-## Demo Accounts
-
-The system includes 4 demo accounts representing different roles:
-
-### Owner Account
-- **Username**: `longvsm`
-- **Password**: `123456`
-- **Email**: `longvsm@lifeos.com`
-- **Permissions**: Full system access, organization management, billing, highest configuration
-
-### Admin Account
-- **Username**: `admin`
-- **Password**: `123456`
-- **Email**: `admin@lifeos.com`
-- **Permissions**: User management, module settings, reports, payroll configuration
-
-### Leader Account
-- **Username**: `leader`
-- **Password**: `123456`
-- **Email**: `leader@lifeos.com`
-- **Permissions**: Team management, approve attendance/leave, assign tasks, view team KPI
-
-### Staff Account
-- **Username**: `staff`
-- **Password**: `123456`
-- **Email**: `staff@lifeos.com`
-- **Permissions**: Check-in/out, complete tasks, manage schedule, create notes, request leave
-
-## Role Permissions Matrix
-
-| Feature | Owner | Admin | Leader | Staff |
-|---------|-------|-------|--------|-------|
-| Dashboard | ✅ | ✅ | ✅ | ✅ |
-| Attendance | ✅ | ✅ | ✅ | ✅ |
-| Tasks | ✅ | ✅ | ✅ | ✅ |
-| Calendar | ✅ | ✅ | ✅ | ✅ |
-| Notes | ✅ | ✅ | ✅ | ✅ |
-| Room Booking | ✅ | ✅ | ✅ | ✅ |
-| Media Player | ✅ | ✅ | ✅ | ✅ |
-| User Management | ✅ | ✅ | ❌ | ❌ |
-| Reports | ✅ | ✅ | ❌ | ❌ |
-| Team Management | ✅ | ✅ | ✅ | ❌ |
-| Approvals | ✅ | ✅ | ✅ | ❌ |
-| Organizations | ✅ | ❌ | ❌ | ❌ |
-| Billing | ✅ | ❌ | ❌ | ❌ |
-| System Settings | ✅ | ✅ | ❌ | ❌ |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn or pnpm
-
-### Installation
-
-1. Clone the repository:
-\`\`\`bash
-git clone <repository-url>
-cd life-os
-\`\`\`
-
-2. Install dependencies:
-\`\`\`bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-\`\`\`
-
-3. Run the development server:
-\`\`\`bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-\`\`\`
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-5. Login with one of the demo accounts above
-
-## Database Setup (For Real Data)
-
-Currently, the application uses mock data stored in Zustand state. To connect to a real database:
-
-### Option 1: Supabase (Recommended)
-
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-
-2. Add environment variables to your project:
-\`\`\`env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-\`\`\`
-
-3. Run the database migration scripts in \`/scripts\` folder:
-   - \`01_create_tables.sql\` - Creates all necessary tables
-   - \`02_create_rls_policies.sql\` - Sets up Row Level Security
-   - \`03_seed_data.sql\` - Seeds initial data
-
-4. Update the store and API calls to use Supabase client instead of mock data
-
-### Option 2: Neon PostgreSQL
-
-1. Create a Neon project at [neon.tech](https://neon.tech)
-
-2. Add environment variable:
-\`\`\`env
-DATABASE_URL=your_neon_connection_string
-\`\`\`
-
-3. Use the same SQL scripts from \`/scripts\` folder
-
-4. Update data fetching logic to use PostgreSQL queries
-
-### Database Schema
-
-The application requires the following tables:
-
-- \`organizations\` - Company/organization data
-- \`users\` - User accounts and profiles
-- \`roles\` - Role definitions
-- \`permissions\` - Permission definitions
-- \`role_permissions\` - Role-permission mappings
-- \`memberships\` - User-organization-role relationships
-- \`workspaces\` - Workspace/team data
-- \`tasks\` - Task management
-- \`attendance_logs\` - Attendance records
-- \`leave_requests\` - Leave request data
-- \`notes\` - Note-taking data
-- \`events\` - Calendar events
-- \`rooms\` - Room/resource data
-- \`bookings\` - Room booking records
-- \`media_player_state\` - Persistent media player state
-- \`audit_logs\` - System audit trail
-
-See \`/scripts/01_create_tables.sql\` for complete schema definitions.
-
-## Project Structure
-
-\`\`\`
-life-os/
-├── app/                      # Next.js app directory
-│   ├── auth/                # Authentication pages
-│   │   ├── login/
-│   │   ├── register/
-│   │   └── forgot-password/
-│   ├── dashboard/           # Dashboard pages
-│   │   ├── attendance/
-│   │   ├── tasks/
-│   │   ├── calendar/
-│   │   ├── notes/
-│   │   ├── rooms/
-│   │   ├── media/
-│   │   ├── admin/
-│   │   └── settings/
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Home page
-│   └── globals.css          # Global styles
-├── components/              # React components
-│   ├── ui/                  # shadcn/ui components
-│   ├── dashboard-nav.tsx
-│   ├── floating-ai.tsx
-│   ├── persistent-media-player.tsx
-│   └── ...
-├── lib/                     # Utility libraries
-│   ├── store.ts            # Zustand store
-│   ├── i18n.ts             # Internationalization
-│   ├── types.ts            # TypeScript types
-│   ├── permissions.ts      # RBAC logic
-│   └── utils.ts            # Utility functions
-├── hooks/                   # Custom React hooks
-├── public/                  # Static assets
-└── scripts/                 # Database scripts
-\`\`\`
-
-## Color Scheme
-
-The application uses a vibrant, professional color palette:
-
-- **Primary (Green)**: oklch(0.6 0.2 160) - Main brand color
-- **Secondary (Blue)**: oklch(0.55 0.18 240) - Secondary actions
-- **Accent (Yellow)**: oklch(0.75 0.18 90) - Highlights and emphasis
-- **Background (Black/White)**: Pure black in dark mode, white in light mode
-- **Foreground**: High contrast text colors
-
-## Key Features Explained
-
-### Persistent Media Player
-
-The media player stays mounted at the root layout level, ensuring music and videos continue playing while navigating between sections. It supports:
-- YouTube videos
-- Spotify playlists
-- Pomodoro timer
-- Volume control
-- Playback controls
-- Expandable full-screen mode
-
-### Role-Based Access Control
-
-The RBAC system provides granular control over features:
-- Permission checks at component level
-- Route protection based on roles
-- Dynamic navigation based on user permissions
-- Audit logging for sensitive actions
-
-### Mobile Optimization
-
-- Off-canvas sidebar with smooth animations
-- Touch-optimized controls (44px minimum)
-- Responsive grid layouts
-- Safe area support for notched devices
-- Bottom action bar for quick access
-
-## Development
-
-### Adding New Features
-
-1. Define types in \`lib/types.ts\`
-2. Add translations in \`lib/i18n.ts\`
-3. Create components in \`components/\`
-4. Add routes in \`app/dashboard/\`
-5. Update navigation in \`components/dashboard-nav.tsx\`
-6. Add permissions in \`lib/permissions.ts\`
-
-### Testing Different Roles
-
-Simply logout and login with different demo accounts to test role-specific features.
-
-## Deployment
-
-### Deploy to Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Add environment variables
-4. Deploy
-
-### Deploy to Other Platforms
-
-The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- Render
-- AWS Amplify
-- Self-hosted with Docker
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-MIT License - feel free to use this project for personal or commercial purposes.
-
-## Support
-
-For issues, questions, or feature requests, please open an issue on GitHub.
+</div>
 
 ---
 
-Built with ❤️ using Next.js and modern web technologies
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Database Schema](#-database-schema)
+- [Role-Based Access](#-role-based-access)
+- [Getting Started](#-getting-started)
+- [Environment Setup](#-environment-setup)
+- [Development](#-development)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🎯 Overview
+
+**Vine CRM** is a comprehensive Enterprise Resource Management platform designed to streamline internal business operations. Built with modern technologies and focused on real-world data handling, it provides a centralized solution for:
+
+- 👥 **Organization Management** - Teams, departments, and user hierarchy
+- ⏰ **Attendance Tracking** - Real-time check-in/check-out with shift management
+- 📋 **Task Management** - Kanban-style workflow with team collaboration
+- 🏢 **Meeting Room Booking** - Smart scheduling and resource allocation
+- 🌴 **Leave Management** - Automated approval workflow
+- 📊 **Analytics Dashboard** - Role-based insights and reporting
+
+> 💡 **Note:** This system uses **real data** (no mockups), supports **dark mode**, features **multi-role user management**, and includes an **AI-powered account seeder**.
+
+---
+
+## ✨ Key Features
+
+### 🎨 **Modern User Interface**
+- Beautiful, responsive design with TailwindCSS + shadcn/ui
+- Full dark mode support with smooth transitions
+- Framer Motion animations for delightful UX
+- Mobile-first approach
+
+### 🔐 **Advanced Security**
+- Row-Level Security (RLS) on all database tables
+- JWT-based authentication via Supabase Auth
+- Audit logging for all critical operations
+- Role-based access control (RBAC)
+
+### 📊 **Role-Based Dashboards**
+
+#### 🧑‍💼 Admin Dashboard
+- Company-wide analytics and metrics
+- User and team management
+- System configuration and audit logs
+- Unassigned tasks and overdue items
+
+#### 👨‍🏫 Leader Dashboard
+- Team attendance overview
+- Task progress tracking
+- Leave request approvals
+- Team performance metrics
+
+#### 👩‍💻 Staff Dashboard
+- Personal attendance records
+- Assigned tasks and deadlines
+- Leave balance and requests
+- Personal meeting schedule
+
+### 🤖 **AI-Powered Features**
+- **Smart Account Seeder**: Bulk user creation via CSV upload
+- Automated email notifications
+- Intelligent task assignment suggestions (planned)
+- Performance analytics (planned)
+
+### ⚡ **Real-Time Updates**
+- Live attendance tracking with Supabase Realtime
+- Instant task status updates
+- Real-time meeting room availability
+- Push notifications for approvals
+
+---
+
+## 🛠 Tech Stack
+
+### **Frontend**
+| Technology | Purpose |
+|-----------|---------|
+| **React 18** | UI library with hooks |
+| **TypeScript** | Type-safe development |
+| **Vite** | Lightning-fast build tool |
+| **TailwindCSS** | Utility-first CSS framework |
+| **shadcn/ui** | Beautiful component library |
+| **Framer Motion** | Smooth animations |
+| **Tanstack Query** | Server state management |
+| **Zustand** | Client state management |
+
+### **Backend**
+| Technology | Purpose |
+|-----------|---------|
+| **Supabase** | PostgreSQL database & Auth |
+| **Golang** | API service layer |
+| **Supabase Storage** | File storage (avatars, attachments) |
+| **Redis** | Queue management (optional) |
+
+### **Deployment**
+- **Frontend**: Vercel / Lovable
+- **Backend**: Fly.io / Railway
+- **Database**: Supabase Cloud
+- **CDN**: Cloudflare (optional)
+
+---
+
+## 📁 Project Structure
+
+```
+vine-crm/
+├── src/
+│   ├── components/         # Reusable UI components
+│   │   ├── ui/            # shadcn/ui components
+│   │   ├── dashboard/     # Dashboard widgets
+│   │   ├── attendance/    # Check-in/out components
+│   │   ├── tasks/         # Task management UI
+│   │   └── meetings/      # Meeting room booking
+│   ├── pages/             # Route pages
+│   │   ├── Index.tsx      # Landing/Dashboard
+│   │   ├── auth/          # Authentication pages
+│   │   ├── tasks/         # Task management
+│   │   ├── attendance/    # Attendance tracking
+│   │   ├── meetings/      # Meeting rooms
+│   │   └── leaves/        # Leave management
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utility functions
+│   ├── integrations/      # Supabase client & types
+│   │   └── supabase/
+│   ├── types/             # TypeScript definitions
+│   └── index.css          # Global styles & design tokens
+├── supabase/
+│   ├── migrations/        # Database migrations
+│   ├── functions/         # Edge functions
+│   └── config.toml        # Supabase config
+├── public/                # Static assets
+└── README.md
+```
+
+---
+
+## 🗄️ Database Schema
+
+### **Core Tables**
+
+| Table | Description |
+|-------|-------------|
+| `users` | User profiles (id, email, role, team_id, shift_id, avatar) |
+| `teams` | Departments and teams (id, name, leader_id) |
+| `shifts` | Work shifts (id, name, start_time, end_time) |
+| `attendance` | Check-in/out logs (user_id, timestamp, location, type) |
+| `tasks` | Work items (id, title, assignee_id, creator_id, deadline, status) |
+| `meeting_rooms` | Conference rooms (id, name, location, capacity, equipment) |
+| `room_bookings` | Meeting reservations (room_id, user_id, start_time, end_time, status) |
+| `leave_requests` | Time-off requests (user_id, type, start_date, end_date, status, approver_id) |
+| `audit_logs` | System activity logs (user_id, action, entity, timestamp) |
+
+> All tables implement **Row-Level Security (RLS)** for data protection.
+
+---
+
+## 👥 Role-Based Access
+
+| Feature | Admin | Leader | Staff |
+|---------|-------|--------|-------|
+| **Organization Management** | ✅ Full CRUD | 👁️ View team only | 🔒 Personal view only |
+| **Attendance Tracking** | ✅ All records | ✅ Team records | ✅ Self only |
+| **Task Management** | ✅ Full control | ✅ Create, assign, approve | ✅ Create & report |
+| **Meeting Rooms** | ✅ Manage rooms | ✅ Approve bookings | ✅ Book only |
+| **Leave Management** | ✅ Approve all | ✅ Approve team | ✅ Request only |
+| **System Settings** | ✅ | 🔒 | 🔒 |
+
+---
+
+## 🚀 Getting Started
+
+### **Prerequisites**
+
+- Node.js 18+ and npm
+- Supabase account
+- Git
+
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/vine-crm.git
+   cd vine-crm
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Update `.env` with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+   VITE_SUPABASE_PROJECT_ID=your_project_id
+   ```
+
+4. **Run database migrations**
+   ```bash
+   npx supabase db push
+   ```
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open your browser**
+   ```
+   http://localhost:8080
+   ```
+
+---
+
+## 🔧 Environment Setup
+
+### **Supabase Configuration**
+
+1. Create a new project on [Supabase](https://supabase.com)
+2. Run migrations from `supabase/migrations/`
+3. Enable Row-Level Security on all tables
+4. Configure authentication providers
+5. Set up storage buckets for avatars and attachments
+
+### **Development Tools**
+
+```bash
+# Install development dependencies
+npm install -D @types/node typescript eslint prettier
+
+# Run linter
+npm run lint
+
+# Format code
+npm run format
+
+# Type check
+npm run type-check
+```
+
+---
+
+## 💻 Development
+
+### **Running Tests**
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests (Playwright)
+npm run test:e2e
+
+# Load testing
+npm run test:load
+```
+
+### **Building for Production**
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## 🌐 Deployment
+
+### **Deploy to Lovable**
+
+Simply open [Lovable](https://lovable.dev/projects/f69f86c8-a387-4d19-b189-642e8f36a015) and click **Share → Publish**.
+
+### **Deploy to Vercel**
+
+```bash
+vercel deploy --prod
+```
+
+### **Custom Domain**
+
+Navigate to **Project > Settings > Domains** to connect your custom domain.
+
+📖 [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+---
+
+## 🎨 Design System
+
+### **Typography**
+
+- **Primary Font**: Inter - Clean and modern
+- **Secondary Font**: Source Sans 3 / Roboto - Dashboard readability
+- **Display Font**: Poppins (optional) - Brand headers
+
+### **Color Palette**
+
+#### Light Mode
+- **Primary**: `#0F62FE` (Blue)
+- **Background**: `#F7F9FC` (Light gray)
+- **Text Secondary**: `#6B7280` (Muted)
+
+#### Dark Mode
+- **Primary**: `#3B82F6` (Bright blue)
+- **Background**: `#0B1220` (Dark navy)
+- **Text Secondary**: `#94A3B8` (Light gray)
+
+### **Components**
+
+All UI components follow the design system tokens defined in `src/index.css` and use semantic color variables. Never use hardcoded colors like `text-white` or `bg-blue-500`.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### **Coding Standards**
+
+- Follow TypeScript best practices
+- Use semantic commit messages
+- Write tests for new features
+- Update documentation as needed
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful components
+- [Supabase](https://supabase.com/) for amazing backend infrastructure
+- [Lucide Icons](https://lucide.dev/) for clean iconography
+- [Framer Motion](https://www.framer.com/motion/) for smooth animations
+
+---
+
+<div align="center">
+
+### 🌟 Star us on GitHub — it motivates us a lot!
+
+**Built with ❤️ by the Vine Team**
+
+[🐛 Report Bug](https://github.com/yourusername/vine-crm/issues) • [✨ Request Feature](https://github.com/yourusername/vine-crm/issues)
+
+</div>
