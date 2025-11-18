@@ -1,20 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // 👈 Thêm useCallback
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@/lib/auth";
+import { getCurrentUser, UserRole } from "@/lib/auth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { SkeletonTable } from "@/components/ui/skeleton-table";
+import { Tables } from "@/integrations/supabase/types";
+
+// Định nghĩa kiểu dữ liệu rõ ràng hơn
+type LeaveRequest = Tables<'leave_requests'>;
 
 const LeaveHistory = ({ role }: { role: UserRole }) => {
-  const [leaves, setLeaves] = useState<any[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchLeaves = async () => {
+  // 👇 KHẮC PHỤC LỖI 2: Dùng useCallback để ổn định hàm fetchLeaves
+  const fetchLeaves = useCallback(async () => {
     try {
       const user = await getCurrentUser();
       if (!user) return;
@@ -24,19 +28,20 @@ const LeaveHistory = ({ role }: { role: UserRole }) => {
         .select('*')
         .order('created_at', { ascending: false });
 
+      // 'role' được sử dụng ở đây, nên nó là dependency của useCallback
       if (role === 'staff') {
         query = query.eq('user_id', user.id);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      setLeaves(data || []);
+      setLeaves((data as LeaveRequest[]) || []);
     } catch (error) {
       console.error('Error fetching leaves:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [role]); // 👈 Dependencies của fetchLeaves
 
   useEffect(() => {
     fetchLeaves();
@@ -51,10 +56,12 @@ const LeaveHistory = ({ role }: { role: UserRole }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [role]);
+    // 👇 KHẮC PHỤC LỖI 2: Thêm fetchLeaves vào dependency array
+  }, [fetchLeaves]); 
 
   const handleApprove = async (leaveId: string) => {
     try {
+      // ... (Giữ nguyên)
       const user = await getCurrentUser();
       if (!user) return;
 
@@ -85,6 +92,7 @@ const LeaveHistory = ({ role }: { role: UserRole }) => {
 
   const handleReject = async (leaveId: string) => {
     try {
+      // ... (Giữ nguyên)
       const user = await getCurrentUser();
       if (!user) return;
 

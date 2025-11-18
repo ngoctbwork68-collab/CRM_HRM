@@ -1,60 +1,80 @@
--- Migration 009_cv_upload_and_notifications_fix.sql
+-- Migration: 20251117145800_cv_upload_and_notifications_fix.sql
+-- Mục đích: Bổ sung chức năng tải lên CV cá nhân, thiết lập RLS Storage và hoàn thiện RLS cho bảng salaries.
 
+--------------------------------------------------------------------------------
 -- BƯỚC 1: CẬP NHẬT BẢNG PROFILES ĐỂ LƯU CV URL
+--------------------------------------------------------------------------------
 
--- Thêm cột cv_url vào bảng profiles
+-- Thêm cột cv_url vào bảng profiles (sử dụng IF NOT EXISTS để an toàn khi chạy lại)
 ALTER TABLE public.profiles
-ADD COLUMN cv_url TEXT;
+ADD COLUMN IF NOT EXISTS cv_url TEXT;
 
+--------------------------------------------------------------------------------
 -- BƯỚC 2: TẠO STORAGE BUCKET MỚI CHO TÀI LIỆU (CV)
+--------------------------------------------------------------------------------
 
--- Tạo storage bucket 'documents'
+-- Tạo storage bucket 'documents' (FALSE = yêu cầu xác thực để truy cập, chỉ Admin và User tự quản lý)
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('documents', 'documents', FALSE) -- Đặt là FALSE để yêu cầu Auth khi truy cập
+VALUES ('documents', 'documents', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
+--------------------------------------------------------------------------------
 -- BƯỚC 3: THIẾT LẬP RLS CHO BUCKET 'documents' (CVs)
+--------------------------------------------------------------------------------
 
--- Cho phép người dùng tải lên CV của chính họ
--- Tên file phải bắt đầu bằng UID của họ (ví dụ: 'uuid/my_cv.pdf')
+-- 3.1 Cho phép người dùng tải lên/ghi đè CV của chính họ
+-- Ràng buộc: bucket_id = 'documents' và tên file bắt đầu bằng UID của user
 CREATE POLICY "Users can upload their own CV"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]
   );
 
--- Cho phép người dùng xem CV của chính họ (Yêu cầu JWT)
+-- 3.2 Cho phép người dùng xem CV của chính họ
 CREATE POLICY "Users can view their own CV"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
--- Cho phép Quản trị viên (Admin) xem bất kỳ CV nào
+-- 3.3 Cho phép Quản trị viên (Admin) xem bất kỳ CV nào
+-- Yêu cầu: Hàm public.has_role() phải tồn tại (đã có trong migration cũ)
 CREATE POLICY "Admins can view all documents"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'documents' AND public.has_role(auth.uid(), 'admin'::app_role));
 
--- Cho phép người dùng cập nhật/ghi đè CV của chính họ
+-- 3.4 Cho phép người dùng cập nhật/ghi đè CV của chính họ
 CREATE POLICY "Users can update their own CV"
   ON storage.objects FOR UPDATE
   USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
--- Cho phép người dùng xóa CV của chính họ
+-- 3.5 Cho phép người dùng xóa CV của chính họ
 CREATE POLICY "Users can delete their own CV"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
--- BƯỚC 4: CẬP NHẬT RÀNG BUỘC FK (Fix một lỗi tiềm ẩn)
+--------------------------------------------------------------------------------
+-- BƯỚC 4: CẬP NHẬT RÀNG BUỘC FK VÀ RLS CHO BẢNG LƯƠNG (salaries)
+--------------------------------------------------------------------------------
 
--- Giả định rằng bạn đã tạo FK cho profiles.id REFERENCES auth.users.id
--- Lệnh này đảm bảo rằng cột user_id trong bảng salaries cũng có ràng buộc FK
--- (Nếu bạn đã chạy các migration trước đó, lệnh này có thể báo lỗi "already exists" - có thể bỏ qua)
--- Nếu bạn chưa thêm, thì nên thêm:
-ALTER TABLE public.salaries
-ADD CONSTRAINT salaries_user_id_fkey FOREIGN KEY (user_id)
-REFERENCES public.profiles(id)
-ON DELETE CASCADE;
+-- 4.1 Thêm ràng buộc Foreign Key từ salaries.user_id đến profiles.id (Đảm bảo tính toàn vẹn dữ liệu)
+-- Sử dụng ALTER TABLE IF EXISTS và DROP CONSTRAINT IF EXISTS để tránh lỗi chạy lại
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'salaries_user_id_fkey'
+  ) THEN
+    ALTER TABLE public.salaries
+    ADD CONSTRAINT salaries_user_id_fkey FOREIGN KEY (user_id)
+    REFERENCES public.profiles(id)
+    ON DELETE CASCADE;
+  END IF;
+END $$;
 
--- BƯỚC 5: CẬP NHẬT CHÍNH SÁCH RLS SALARIES (Nếu cần thiết)
--- Bạn có thể thêm chính sách cho người dùng xem lương của chính họ, nếu cần.
--- CREATE POLICY "Users can view their own salaries" ON public.salaries
--- FOR SELECT USING (auth.uid() = user_id);
+
+-- 4.2 Cập nhật chính sách RLS: Cho phép User xem lương của chính họ (BỔ SUNG)
+-- Chính sách này sẽ cho phép người dùng xem hồ sơ lương của riêng mình
+CREATE POLICY "Users can view their own salaries"
+ON public.salaries
+FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Lưu ý: Các chính sách Admin đã được tạo trong file migration cũ (Admins can view/manage salaries).
