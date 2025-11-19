@@ -454,19 +454,19 @@ const AttendanceManagement = () => {
           ) : (
             <div className="space-y-3">
               {attendanceRecords.map(record => (
-                <Card key={record.id} className="overflow-hidden">
-                  <CardContent className="pt-6 pb-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-semibold">{record.user_name}</p>
-                        <p className="text-sm text-muted-foreground">{record.user_email}</p>
+                <Card key={record.id} className="overflow-hidden hover:shadow-medium transition-shadow">
+                  <CardContent className="p-3 md:p-6">
+                    <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm md:text-base truncate">{record.user_name}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">{record.user_email}</p>
                       </div>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs md:text-sm font-medium">
                             {SHIFT_TYPES.find(st => st.value === record.shift_type)?.label}
                           </span>
-                          <Badge className={`${getStatusBadgeColor(record.status)} border-0`}>
+                          <Badge className={`${getStatusBadgeColor(record.status)} border-0 text-xs flex-shrink-0`}>
                             {getStatusLabel(record.status)}
                           </Badge>
                         </div>
