@@ -54,21 +54,44 @@ const ShiftAttendanceWidget = () => {
   const calculateStats = useCallback((records: ShiftRecord[]) => {
     const monthStart = startOfMonth(new Date());
     const monthEnd = endOfMonth(new Date());
-    
+
     const monthRecords = records.filter(r => {
-      const recordDate = new Date(r.date);
+      const recordDate = new Date(r.timestamp);
       return recordDate >= monthStart && recordDate <= monthEnd;
     });
 
-    const completed = monthRecords.filter(r => r.status === 'completed').length;
-    const pending = monthRecords.filter(r => r.status === 'pending' || r.status === 'checked_in').length;
-    const absent = monthRecords.filter(r => r.status === 'absent').length;
+    // Count by shift type per day
+    const shiftsByDay: { [key: string]: ShiftRecord[] } = {};
+    monthRecords.forEach(r => {
+      const dateStr = new Date(r.timestamp).toISOString().split('T')[0];
+      if (!shiftsByDay[dateStr]) shiftsByDay[dateStr] = [];
+      shiftsByDay[dateStr].push(r);
+    });
+
+    let completedShifts = 0;
+    let pendingShifts = 0;
+    let absentShifts = 0;
+
+    Object.values(shiftsByDay).forEach(dayRecords => {
+      const hasCheckIn = dayRecords.some(r => r.type === 'check_in');
+      const hasCheckOut = dayRecords.some(r => r.type === 'check_out');
+
+      if (dayRecords.some(r => r.is_leave)) {
+        absentShifts++;
+      } else if (hasCheckIn && hasCheckOut) {
+        completedShifts++;
+      } else if (hasCheckIn) {
+        pendingShifts++;
+      } else {
+        absentShifts++;
+      }
+    });
 
     setStats({
-      totalShifts: monthRecords.length,
-      completedShifts: completed,
-      pendingShifts: pending,
-      absentShifts: absent
+      totalShifts: Object.keys(shiftsByDay).length,
+      completedShifts,
+      pendingShifts,
+      absentShifts
     });
   }, []);
 
