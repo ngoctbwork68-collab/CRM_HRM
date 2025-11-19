@@ -73,10 +73,10 @@ const ShiftAttendanceWidget = () => {
   const loadAllAttendance = useCallback(async (uid: string) => {
     try {
       const { data, error } = await supabase
-        .from('shift_attendance')
+        .from('attendance')
         .select('*')
         .eq('user_id', uid)
-        .order('date', { ascending: false })
+        .order('timestamp', { ascending: false })
         .limit(100);
 
       if (error) throw error;
@@ -91,10 +91,11 @@ const ShiftAttendanceWidget = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
-        .from('shift_attendance')
+        .from('attendance')
         .select('*')
         .eq('user_id', uid)
-        .eq('date', today)
+        .gte('timestamp', `${today}T00:00:00`)
+        .lte('timestamp', `${today}T23:59:59`)
         .order('shift_type');
 
       if (error) throw error;
@@ -196,7 +197,7 @@ const ShiftAttendanceWidget = () => {
 
       toast({
         title: "Chấm công thành công",
-        description: `Đã chấm công ${SHIFT_TIMES[shiftType].label} lúc ${format(new Date(), 'HH:mm')}`,
+        description: `Đã chấm c��ng ${SHIFT_TIMES[shiftType].label} lúc ${format(new Date(), 'HH:mm')}`,
       });
 
       await loadTodayAttendance(userId);
