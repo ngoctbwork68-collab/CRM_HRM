@@ -189,36 +189,21 @@ const ShiftAttendanceWidget = () => {
 
     setIsLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
       const location = await getLocation();
+      const timestamp = new Date().toISOString();
 
-      const existingRecord = todayRecords.find(r => r.shift_type === shiftType);
+      const { error } = await supabase
+        .from('attendance')
+        .insert({
+          user_id: userId,
+          type: 'check_in',
+          timestamp,
+          shift_type: shiftType,
+          location,
+          is_leave: false
+        });
 
-      if (existingRecord) {
-        const { error } = await supabase
-          .from('shift_attendance')
-          .update({
-            check_in: new Date().toISOString(),
-            status: 'checked_in',
-            location
-          })
-          .eq('id', existingRecord.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('shift_attendance')
-          .insert({
-            user_id: userId,
-            shift_type: shiftType,
-            date: today,
-            check_in: new Date().toISOString(),
-            status: 'checked_in',
-            location
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Chấm công thành công",
@@ -243,25 +228,18 @@ const ShiftAttendanceWidget = () => {
     setIsLoading(true);
     try {
       const location = await getLocation();
-      const record = todayRecords.find(r => r.shift_type === shiftType);
-
-      if (!record) {
-        toast({
-          variant: "destructive",
-          title: "Lỗi",
-          description: "Vui lòng chấm công vào ca trước tiên",
-        });
-        return;
-      }
+      const timestamp = new Date().toISOString();
 
       const { error } = await supabase
-        .from('shift_attendance')
-        .update({
-          check_out: new Date().toISOString(),
-          status: 'completed',
-          location
-        })
-        .eq('id', record.id);
+        .from('attendance')
+        .insert({
+          user_id: userId,
+          type: 'check_out',
+          timestamp,
+          shift_type: shiftType,
+          location,
+          is_leave: false
+        });
 
       if (error) throw error;
 
