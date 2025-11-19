@@ -316,16 +316,16 @@ const ShiftAttendanceWidget = () => {
             </Badge>
           </div>
 
-          {record && (
+          {(hasCheckIn || hasCheckOut) && (
             <div className="text-xs md:text-sm space-y-1 bg-muted/50 rounded p-2">
-              {record.check_in && (
+              {checkInRecord && (
                 <p className="text-foreground">
-                  <span className="font-medium">Vào:</span> {format(new Date(record.check_in), 'HH:mm')}
+                  <span className="font-medium">Vào:</span> {format(new Date(checkInRecord.timestamp), 'HH:mm')}
                 </p>
               )}
-              {record.check_out && (
+              {checkOutRecord && (
                 <p className="text-foreground">
-                  <span className="font-medium">Ra:</span> {format(new Date(record.check_out), 'HH:mm')}
+                  <span className="font-medium">Ra:</span> {format(new Date(checkOutRecord.timestamp), 'HH:mm')}
                 </p>
               )}
             </div>
@@ -335,23 +335,21 @@ const ShiftAttendanceWidget = () => {
             <Button
               size="sm"
               className="flex-1 text-xs md:text-sm h-9 md:h-10"
-              disabled={isCompleted || isLoading}
+              disabled={hasCheckIn || isLoading}
               onClick={() => handleShiftCheckIn(shiftType)}
             >
               {isLoading ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" /> : <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />}
-              <span className="hidden sm:inline">Vào</span>
-              <span className="sm:hidden">Vào</span>
+              Vào
             </Button>
             <Button
               size="sm"
               variant="outline"
               className="flex-1 text-xs md:text-sm h-9 md:h-10"
-              disabled={!isCheckedIn || isCompleted || isLoading}
+              disabled={!hasCheckIn || hasCheckOut || isLoading}
               onClick={() => handleShiftCheckOut(shiftType)}
             >
               {isLoading ? <Loader2 className="h-3 w-3 md:h-4 md:w-4 animate-spin" /> : <XCircle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />}
-              <span className="hidden sm:inline">Ra</span>
-              <span className="sm:hidden">Ra</span>
+              Ra
             </Button>
           </div>
         </CardContent>
