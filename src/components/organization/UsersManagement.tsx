@@ -35,9 +35,16 @@ const UsersManagement = () => {
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-    
-    // THÊM STATE TÌM KIẾM
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const [selectedUserForRole, setSelectedUserForRole] = useState<UserDetail | null>(null);
+    const [selectedNewRole, setSelectedNewRole] = useState<string>('');
+    const [isApprovingUser, setIsApprovingUser] = useState<string | null>(null);
+
+    // FILTERS STATE
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterRole, setFilterRole] = useState<string>('');
+    const [filterStatus, setFilterStatus] = useState<string>('');
+    const [filterAccountStatus, setFilterAccountStatus] = useState<string>('');
 
     const { toast } = useToast(); 
 
