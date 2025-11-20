@@ -88,7 +88,7 @@ const UsersManagement = () => {
                 `)
                 .order('last_name');
 
-            // ÁP DỤNG BỘ L���C TÌM KIẾM
+            // ÁP DỤNG BỘ LỌC TÌM KIẾM
             if (searchTerm) {
                 const searchPattern = `%${searchTerm}%`;
                 query = query.or(
@@ -285,39 +285,121 @@ const UsersManagement = () => {
                 {/* HÀNG CHI TIẾT MỞ RỘNG (ẨN) */}
                 {isExpanded && (
                     <TableRow className="bg-secondary/30 hover:bg-secondary/40 transition-colors">
-                        <TableCell colSpan={5} className="py-4 px-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm">
-                                
-                                {/* CỘT 1: HỌC VẤN */}
-                                <div className="space-y-1">
-                                    <h4 className="font-bold flex items-center gap-1 text-primary"><GraduationCap className="w-4 h-4" /> Học vấn</h4>
-                                    <p><span className="font-medium">Trường:</span> {user.university || '—'}</p>
-                                    <p><span className="font-medium">Chuyên ngành:</span> {user.major || '—'}</p>
-                                </div>
-                                
-                                {/* CỘT 2: THÔNG TIN CÁ NHÂN MỞ RỘNG */}
-                                <div className="space-y-1">
-                                    <h4 className="font-bold flex items-center gap-1 text-primary"><Calendar className="w-4 h-4" /> Cá nhân</h4>
-                                    <p><span className="font-medium">SĐT:</span> {user.phone || '—'}</p>
-                                    <p><span className="font-medium">Ngày sinh:</span> {user.date_of_birth ? format(new Date(user.date_of_birth), 'dd/MM/yyyy') : '—'}</p>
-                                    <p><span className="font-medium">Giới tính:</span> {user.gender || '—'}</p>
+                        <TableCell colSpan={6} className="py-4 px-6">
+                            <div className="space-y-6">
+                                {/* PHẦN 1: THÔNG TIN CHÍNH */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm">
+
+                                    {/* CỘT 1: HỌC VẤN */}
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold flex items-center gap-1 text-primary"><GraduationCap className="w-4 h-4" /> Học vấn</h4>
+                                        <p><span className="font-medium">Trường:</span> {user.university || '—'}</p>
+                                        <p><span className="font-medium">Chuyên ngành:</span> {user.major || '—'}</p>
+                                    </div>
+
+                                    {/* CỘT 2: THÔNG TIN CÁ NHÂN MỞ RỘNG */}
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold flex items-center gap-1 text-primary"><Calendar className="w-4 h-4" /> Cá nhân</h4>
+                                        <p><span className="font-medium">SĐT:</span> {user.phone || '—'}</p>
+                                        <p><span className="font-medium">Ngày sinh:</span> {user.date_of_birth ? format(new Date(user.date_of_birth), 'dd/MM/yyyy') : '—'}</p>
+                                        <p><span className="font-medium">Giới tính:</span> {user.gender || '—'}</p>
+                                    </div>
+
+                                    {/* CỘT 3: VẬN HÀNH & CA LÀM VIỆC */}
+                                    <div className="space-y-2 md:col-span-2">
+                                        <h4 className="font-bold flex items-center gap-1 text-primary"><Briefcase className="w-4 h-4" /> Vận hành & Tài liệu</h4>
+                                        <p className="text-sm"><span className="font-medium">Ca làm:</span> {user.shift?.name || '—'}</p>
+                                        <p className="text-xs text-muted-foreground">Thời gian: ({shiftInfoTime})</p>
+
+                                        {user.cv_url ? (
+                                            <a href={user.cv_url} target="_blank" rel="noopener noreferrer">
+                                                <Button variant="secondary" size="sm" className="bg-green-600 hover:bg-green-700 text-white mt-2">
+                                                    <FileText className="h-4 w-4 mr-2" /> Xem CV
+                                                </Button>
+                                            </a>
+                                        ) : (
+                                            <p className="text-sm text-red-500 mt-2">Chưa có CV được tải lên.</p>
+                                        )}
+                                    </div>
                                 </div>
 
-                                {/* CỘT 3: VẬN HÀNH & CA LÀM VIỆC */}
-                                <div className="space-y-2 md:col-span-2">
-                                    <h4 className="font-bold flex items-center gap-1 text-primary"><Briefcase className="w-4 h-4" /> Vận hành & Tài liệu</h4>
-                                    <p className="text-sm"><span className="font-medium">Ca làm:</span> {user.shift?.name || '—'}</p>
-                                    <p className="text-xs text-muted-foreground">Thời gian: ({shiftInfoTime})</p>
+                                {/* PHẦN 2: HÀNH ĐỘNG QUẢN LÝ */}
+                                <div className="border-t pt-4 space-y-3">
+                                    <h4 className="font-bold text-primary">Quản lý Tài khoản</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {user.account_status === 'PENDING' && (
+                                            <>
+                                                <Button
+                                                    size="sm"
+                                                    variant="default"
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    disabled={isApprovingUser === user.id}
+                                                    onClick={() => handleApproveUser(user.id, `${user.first_name} ${user.last_name}`)}
+                                                >
+                                                    {isApprovingUser === user.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                                                    Phê duyệt
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    disabled={isApprovingUser === user.id}
+                                                    onClick={() => handleRejectUser(user.id, `${user.first_name} ${user.last_name}`)}
+                                                >
+                                                    {isApprovingUser === user.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
+                                                    Từ chối
+                                                </Button>
+                                            </>
+                                        )}
 
-                                    {user.cv_url ? (
-                                        <a href={user.cv_url} target="_blank" rel="noopener noreferrer">
-                                            <Button variant="secondary" size="sm" className="bg-green-600 hover:bg-green-700 text-white mt-2">
-                                                <FileText className="h-4 w-4 mr-2" /> Xem CV
-                                            </Button>
-                                        </a>
-                                    ) : (
-                                        <p className="text-sm text-red-500 mt-2">Chưa có CV được tải lên.</p>
-                                    )}
+                                        <Dialog open={isRoleModalOpen && selectedUserForRole?.id === user.id} onOpenChange={(open) => {
+                                            if (!open) {
+                                                setIsRoleModalOpen(false);
+                                                setSelectedUserForRole(null);
+                                                setSelectedNewRole('');
+                                            }
+                                        }}>
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedUserForRole(user);
+                                                        setSelectedNewRole(user.user_roles?.[0]?.role || '');
+                                                        setIsRoleModalOpen(true);
+                                                    }}
+                                                >
+                                                    Gán vai trò
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Gán vai trò cho {user.first_name} {user.last_name}</DialogTitle>
+                                                    <DialogDescription>Chọn vai trò mới cho người dùng</DialogDescription>
+                                                </DialogHeader>
+                                                <div className="space-y-4">
+                                                    <Label htmlFor="role-select">Vai trò</Label>
+                                                    <Select value={selectedNewRole} onValueChange={setSelectedNewRole}>
+                                                        <SelectTrigger id="role-select">
+                                                            <SelectValue placeholder="Chọn vai trò" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="admin">Admin</SelectItem>
+                                                            <SelectItem value="hr">HR</SelectItem>
+                                                            <SelectItem value="leader">Leader</SelectItem>
+                                                            <SelectItem value="teacher">Teacher</SelectItem>
+                                                            <SelectItem value="it">IT</SelectItem>
+                                                            <SelectItem value="content">Content</SelectItem>
+                                                            <SelectItem value="design">Design</SelectItem>
+                                                            <SelectItem value="staff">Staff</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Button className="w-full" onClick={handleUpdateRole}>
+                                                        Cập nhật vai trò
+                                                    </Button>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
                                 </div>
                             </div>
                         </TableCell>
