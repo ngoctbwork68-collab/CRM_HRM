@@ -127,3 +127,21 @@ export const rejectRegistration = async (registrationId: string, reason: string)
 
   return { data, error };
 };
+
+export const getRegistrationStatus = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('user_registrations')
+    .select('status, rejection_reason, reapplication_count')
+    .eq('user_id', userId)
+    .single();
+
+  return { data, error };
+};
+
+export const createUserRegistration = async (registrationData: any) => {
+  const { data, error } = await supabase
+    .from('user_registrations')
+    .insert([registrationData]);
+
+  return { data, error };
+};
