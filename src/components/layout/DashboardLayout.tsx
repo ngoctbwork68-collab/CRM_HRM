@@ -43,8 +43,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
     // --- LOGIC MENU ITEMS ---
     const baseMenuItems: NavItem[] = [
         { icon: LayoutDashboard, label: "Bảng điều khiển", path: "/dashboard" },
-        { icon: Clock, label: "Chấm công", path: "/attendance" }, // Chấm công
-        { icon: FileText, label: "Nghỉ phép", path: "/leave" }, // Nghỉ phép (Tách riêng)
+        { icon: Clock, label: "Chấm công", path: "/attendance" },
         { icon: ListChecks, label: "Công việc", path: "/tasks" },
         { icon: Calendar, label: "Phòng họp", path: "/meeting-rooms" },
     ];
