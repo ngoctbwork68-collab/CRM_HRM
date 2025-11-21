@@ -175,22 +175,26 @@ const TaskGanttChart = ({ tasks, onTaskReschedule }: TaskGanttChartProps) => {
 
                 <div className="flex relative h-16 flex-1">
                   {Array.from({ length: chartDays }).map((_, i) => (
-                    <div key={i} className="w-12 border-r flex-shrink-0" />
+                    <div
+                      key={i}
+                      className="w-12 border-r flex-shrink-0 hover:bg-blue-50 transition-colors cursor-move"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => handleDayDrop(e, i)}
+                    />
                   ))}
 
                   {/* Task Bar */}
                   {position.width > 0 && (
                     <div
-                      className={`absolute top-2 h-12 rounded cursor-move hover:opacity-80 transition-opacity flex items-center px-2 ${getStatusColor(task.status)} text-white text-xs font-medium overflow-hidden whitespace-nowrap`}
+                      className={`absolute top-2 h-12 rounded cursor-move hover:opacity-80 transition-opacity flex items-center px-2 ${getStatusColor(task.status)} text-white text-xs font-medium overflow-hidden whitespace-nowrap ${draggedTaskId === task.id ? 'opacity-50' : ''}`}
                       style={{
                         left: `calc(16rem + ${position.left * 48}px)`,
                         width: `${position.width * 48}px`,
                       }}
                       title={`${task.title} - ${task.progress_percentage}% done`}
                       draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer?.setData('taskId', task.id);
-                      }}
+                      onDragStart={(e) => handleTaskDragStart(e, task)}
+                      onDragEnd={handleTaskDragEnd}
                     >
                       <div className="truncate">{task.title}</div>
                     </div>
