@@ -5,6 +5,10 @@ import { UserRole } from "@/lib/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TaskBoard from "@/components/tasks/TaskBoard";
 import TaskList from "@/components/tasks/TaskList";
+import ScheduleTab from "@/components/tasks/ScheduleTab";
+import TeamAllocationTab from "@/components/tasks/TeamAllocationTab";
+import ReportsTab from "@/components/tasks/ReportsTab";
+import { LayoutGrid, List, Calendar, Users, FileText } from "lucide-react";
 
 const Tasks = () => {
   const [role, setRole] = useState<UserRole>('staff');
@@ -30,18 +34,41 @@ const Tasks = () => {
         </div>
 
         <Tabs defaultValue="board" className="w-full">
-          <TabsList className="bg-secondary shadow-soft">
+          <TabsList className="bg-secondary shadow-soft flex flex-wrap h-auto gap-1 p-1">
             <TabsTrigger
               value="board"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
             >
-              Bảng
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Bảng</span>
             </TabsTrigger>
             <TabsTrigger
               value="list"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
             >
-              Danh sách
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Danh sách</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="schedule"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Lịch & Gantt</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="team"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Nhóm</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="reports"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Báo Cáo</span>
             </TabsTrigger>
           </TabsList>
 
@@ -51,6 +78,18 @@ const Tasks = () => {
 
           <TabsContent value="list" className="mt-6">
             <TaskList role={role} />
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-6">
+            <ScheduleTab />
+          </TabsContent>
+
+          <TabsContent value="team" className="mt-6">
+            <TeamAllocationTab role={role} />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <ReportsTab role={role} />
           </TabsContent>
         </Tabs>
       </div>
