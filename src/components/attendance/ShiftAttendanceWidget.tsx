@@ -105,8 +105,9 @@ const ShiftAttendanceWidget = () => {
         .limit(100);
 
       if (error) {
-        console.error('Attendance query error:', error);
-        throw new Error(error.message || 'Failed to load attendance');
+        const errorMsg = error && typeof error === 'object' ? (error as any).message : String(error);
+        console.error('Attendance query error:', errorMsg);
+        throw new Error(errorMsg || 'Failed to load attendance');
       }
       setAllRecords(data || []);
       calculateStats(data || []);
@@ -114,15 +115,12 @@ const ShiftAttendanceWidget = () => {
       let errorMessage = 'Không thể tải lịch sử chấm công';
       if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
-      console.error('Error loading attendance:', errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Lỗi tải chấm công",
-        description: errorMessage
-      });
+      console.error('Error loading all attendance:', errorMessage);
     }
-  }, [calculateStats, toast]);
+  }, [calculateStats]);
 
   const loadTodayAttendance = useCallback(async (uid: string) => {
     try {
@@ -136,23 +134,21 @@ const ShiftAttendanceWidget = () => {
         .order('shift_type');
 
       if (error) {
-        console.error('Today attendance query error:', error);
-        throw new Error(error.message || 'Failed to load today attendance');
+        const errorMsg = error && typeof error === 'object' ? (error as any).message : String(error);
+        console.error('Today attendance query error:', errorMsg);
+        throw new Error(errorMsg || 'Failed to load today attendance');
       }
       setTodayRecords(data || []);
     } catch (error) {
       let errorMessage = 'Không thể tải chấm công hôm nay';
       if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
       console.error('Error loading today attendance:', errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Lỗi tải chấm công hôm nay",
-        description: errorMessage
-      });
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     const initUser = async () => {
