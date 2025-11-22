@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ShiftAttendanceWidget from "@/components/attendance/ShiftAttendanceWidget";
+import DailyAttendanceWidget from "@/components/attendance/DailyAttendanceWidget";
 import AttendanceManagementWidget from "@/components/attendance/AttendanceManagementWidget";
 import { getUserRole, getCurrentUser } from "@/lib/auth";
 import { UserRole } from "@/lib/auth";
@@ -52,7 +52,7 @@ const Attendance = () => {
         </div>
 
         {/* Content */}
-        {isAdminOrLeader ? <AttendanceManagementWidget /> : <ShiftAttendanceWidget />}
+        {isAdminOrLeader ? <AttendanceManagementWidget /> : <DailyAttendanceWidget />}
       </div>
 
       {/* Leave Modal */}
