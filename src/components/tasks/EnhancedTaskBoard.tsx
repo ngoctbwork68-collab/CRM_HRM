@@ -74,6 +74,17 @@ export const EnhancedTaskBoard = ({
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [users, setUsers] = useState<Array<{ id: string; first_name?: string; last_name?: string; avatar_url?: string | null }>>([]);
+
+  // Load all users
+  useMemo(async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url');
+    if (data) setUsers(data);
+  }, []);
 
   // Set first status on load
   useMemo(() => {
