@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { getUserRole, getCurrentUser } from "@/lib/auth";
+import { getUserRole, getCurrentUser, getUserProfile } from "@/lib/auth";
 import { UserRole } from "@/lib/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
-import TaskBoard from "@/components/tasks/TaskBoard";
+import { EnhancedTaskBoard } from "@/components/tasks/EnhancedTaskBoard";
 import TaskList from "@/components/tasks/TaskList";
 import ScheduleTab from "@/components/tasks/ScheduleTab";
 import TeamAllocationTab from "@/components/tasks/TeamAllocationTab";
@@ -21,15 +22,40 @@ import { LayoutGrid, List, Calendar, Users, FileText, Target, Waypoints, Clipboa
 
 const Tasks = () => {
   const [role, setRole] = useState<UserRole>('staff');
+  const [userId, setUserId] = useState<string>('');
+  const [teamId, setTeamId] = useState<string>('');
+  const [creatorData, setCreatorData] = useState<Record<string, any>>({});
+  const [assigneeData, setAssigneeData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const loadRole = async () => {
+    const loadUserData = async () => {
       const user = await getCurrentUser();
       if (!user) return;
+
+      setUserId(user.id);
       const userRole = await getUserRole(user.id);
       setRole(userRole);
+
+      const profile = await getUserProfile(user.id);
+      if (profile?.team_id) {
+        setTeamId(profile.team_id);
+      }
+
+      // Load all user data for creators and assignees
+      const { data: users } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url');
+
+      if (users) {
+        const userMap = users.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, any>);
+        setCreatorData(userMap);
+        setAssigneeData(userMap);
+      }
     };
-    loadRole();
+    loadUserData();
   }, []);
 
   return (
