@@ -193,14 +193,20 @@ const AdminAttendanceManagement = () => {
       return;
     }
 
+    const isValidDate = (dateString: string | null): boolean => {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      return date instanceof Date && !isNaN(date.getTime());
+    };
+
     const headers = ['Ngày', 'Nhân viên', 'Email', 'Phòng ban', 'Giờ vào', 'Giờ ra', 'Tổng giờ', 'Trạng thái'];
     const rows = records.map(r => [
-      format(new Date(r.attendance_date), 'dd/MM/yyyy'),
+      isValidDate(r.attendance_date) ? format(new Date(r.attendance_date), 'dd/MM/yyyy') : 'N/A',
       r.user_name,
       r.user_email,
       r.team_name || 'N/A',
-      r.check_in_time ? format(new Date(r.check_in_time), 'HH:mm') : '',
-      r.check_out_time ? format(new Date(r.check_out_time), 'HH:mm') : '',
+      r.check_in_time && isValidDate(r.check_in_time) ? format(new Date(r.check_in_time), 'HH:mm') : '',
+      r.check_out_time && isValidDate(r.check_out_time) ? format(new Date(r.check_out_time), 'HH:mm') : '',
       r.total_hours.toFixed(2),
       r.status
     ]);
@@ -263,7 +269,7 @@ const AdminAttendanceManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Search */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Tìm tên/email</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">T��m tên/email</label>
               <Input
                 placeholder="Nhập tên hoặc email..."
                 value={searchText}
