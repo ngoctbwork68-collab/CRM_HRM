@@ -270,7 +270,7 @@ const DailyAttendanceWidget = () => {
       const hours = (checkoutTime.getTime() - checkinTime.getTime()) / (1000 * 60 * 60);
 
       toast({
-        title: "Ra về th��nh công",
+        title: "Ra về thành công",
         description: `${format(new Date(), 'HH:mm')} - Làm việc: ${hours.toFixed(2)} giờ`,
       });
 
@@ -348,13 +348,37 @@ const DailyAttendanceWidget = () => {
               <div>
                 <p className="text-xs text-muted-foreground">Giờ vào</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {todayRecord.check_in_time ? format(new Date(todayRecord.check_in_time), 'HH:mm') : '---'}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(todayRecord.check_in_time)) return '---';
+                    try {
+                      return format(new Date(todayRecord.check_in_time!), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Giờ ra</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {todayRecord.check_out_time ? format(new Date(todayRecord.check_out_time), 'HH:mm') : '---'}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(todayRecord.check_out_time)) return '---';
+                    try {
+                      return format(new Date(todayRecord.check_out_time!), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </p>
               </div>
               <div className="col-span-2">
