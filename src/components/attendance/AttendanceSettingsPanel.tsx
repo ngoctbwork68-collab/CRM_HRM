@@ -216,7 +216,6 @@ const AttendanceSettingsPanel = () => {
               <SelectValue placeholder="Cài đặt toàn cục (Global)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Cài đặt toàn cục (Global)</SelectItem>
               {teams.map(team => (
                 <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
               ))}
