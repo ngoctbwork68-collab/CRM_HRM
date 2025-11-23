@@ -314,11 +314,23 @@ const AttendanceWidget = () => {
               <span>Check In</span>
               {latestCheckIn && (
                 <span className="text-xs opacity-80">
-                  {format(new Date(latestCheckIn.timestamp), 'HH:mm')}
+                  {(() => {
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!isValidDate(latestCheckIn.timestamp)) return '---';
+                    try {
+                      return format(new Date(latestCheckIn.timestamp), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </span>
               )}
             </Button>
-            
+
             <Button
               size="lg"
               variant="outline"
@@ -330,7 +342,20 @@ const AttendanceWidget = () => {
               <span>Check Out</span>
               {todayRecords.find(r => r.type === 'check_out') && (
                 <span className="text-xs opacity-80">
-                  {format(new Date(todayRecords.find(r => r.type === 'check_out')!.timestamp), 'HH:mm')}
+                  {(() => {
+                    const checkOutRecord = todayRecords.find(r => r.type === 'check_out');
+                    const isValidDate = (dateString: string | null): boolean => {
+                      if (!dateString) return false;
+                      const date = new Date(dateString);
+                      return date instanceof Date && !isNaN(date.getTime());
+                    };
+                    if (!checkOutRecord || !isValidDate(checkOutRecord.timestamp)) return '---';
+                    try {
+                      return format(new Date(checkOutRecord.timestamp), 'HH:mm');
+                    } catch {
+                      return '---';
+                    }
+                  })()}
                 </span>
               )}
             </Button>
