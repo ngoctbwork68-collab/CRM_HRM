@@ -502,13 +502,28 @@ const DailyAttendanceWidget = () => {
                 <p className="text-center text-muted-foreground py-8">Không có lịch sử chấm công</p>
               ) : (
                 filteredRecords.map((record) => {
-                  const statusColor = 
+                  const isValidDate = (dateString: string | null): boolean => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date instanceof Date && !isNaN(date.getTime());
+                  };
+
+                  const formatDate = (dateString: string | null, formatStr: string, opts?: any) => {
+                    if (!isValidDate(dateString)) return '---';
+                    try {
+                      return format(new Date(dateString), formatStr, opts);
+                    } catch {
+                      return '---';
+                    }
+                  };
+
+                  const statusColor =
                     record.status === 'present' ? 'bg-green-100 text-green-700' :
                     record.status === 'absent' ? 'bg-red-100 text-red-700' :
                     record.status === 'leave' ? 'bg-blue-100 text-blue-700' :
                     record.status === 'late' ? 'bg-yellow-100 text-yellow-700' :
                     'bg-gray-100 text-gray-700';
-                  const statusText = 
+                  const statusText =
                     record.status === 'present' ? 'Có công' :
                     record.status === 'absent' ? 'Vắng' :
                     record.status === 'leave' ? 'Nghỉ phép' :
@@ -519,13 +534,13 @@ const DailyAttendanceWidget = () => {
                     <div key={record.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm">{format(new Date(record.attendance_date), 'EEEE, dd/MM', { locale: vi })}</p>
+                          <p className="font-semibold text-sm">{formatDate(record.attendance_date, 'EEEE, dd/MM', { locale: vi })}</p>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {record.check_in_time && record.check_out_time
-                            ? `${format(new Date(record.check_in_time), 'HH:mm')} → ${format(new Date(record.check_out_time), 'HH:mm')}`
-                            : record.check_in_time
-                            ? `Vào: ${format(new Date(record.check_in_time), 'HH:mm')}`
+                          {record.check_in_time && record.check_out_time && isValidDate(record.check_in_time) && isValidDate(record.check_out_time)
+                            ? `${formatDate(record.check_in_time, 'HH:mm')} → ${formatDate(record.check_out_time, 'HH:mm')}`
+                            : record.check_in_time && isValidDate(record.check_in_time)
+                            ? `Vào: ${formatDate(record.check_in_time, 'HH:mm')}`
                             : 'Không có dữ liệu'
                           }
                         </p>
