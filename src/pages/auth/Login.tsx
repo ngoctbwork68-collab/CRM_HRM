@@ -139,11 +139,11 @@ const Login = () => {
 
         try {
             // Validate required fields
-            if (!signupFirstName || !signupLastName || !signupEmail || !signupPassword || !signupPhone || !signupDepartment || !signupEmploymentStatus) {
+            if (!signupFirstName || !signupLastName || !signupEmail || !signupPassword || !signupPhone) {
                 toast({
                     variant: "destructive",
                     title: "Thông tin không đầy đủ",
-                    description: "Vui lòng điền đầy đủ tất cả các trường bắt buộc"
+                    description: "Vui lòng điền tên, họ, email, mật khẩu và số điện thoại"
                 });
                 setIsLoading(false);
                 return;
