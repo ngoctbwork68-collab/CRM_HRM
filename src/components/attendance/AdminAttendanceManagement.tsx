@@ -77,7 +77,11 @@ const AdminAttendanceManagement = () => {
       setTeams(teamMap);
       setTeamList(data || []);
     } catch (error) {
-      console.error('Error loading teams:', error);
+      try {
+        console.error('Error loading teams:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading teams: Unknown error');
+      }
     }
   }, []);
 
@@ -91,7 +95,11 @@ const AdminAttendanceManagement = () => {
       setUsers(userMap);
       setUserList(data || []);
     } catch (error) {
-      console.error('Error loading users:', error);
+      try {
+        console.error('Error loading users:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading users: Unknown error');
+      }
     }
   }, []);
 
@@ -136,7 +144,11 @@ const AdminAttendanceManagement = () => {
 
       setRecords(enrichedRecords);
     } catch (error) {
-      console.error('Error loading records:', error);
+      try {
+        console.error('Error loading records:', error instanceof Error ? error.message : 'Unknown error');
+      } catch (e) {
+        console.error('Error loading records: Unknown error');
+      }
       toast({
         variant: "destructive",
         title: "Lỗi",
@@ -188,7 +200,7 @@ const AdminAttendanceManagement = () => {
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: "Không có dữ liệu để xuất"
+        description: "Không có dữ li��u để xuất"
       });
       return;
     }
