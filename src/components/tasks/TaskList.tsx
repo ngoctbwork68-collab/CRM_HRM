@@ -104,56 +104,150 @@ const TaskList = ({ role }: { role: UserRole }) => {
 
   return (
     <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Task</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Deadline</TableHead>
-            <TableHead>Created</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow 
-              key={task.id} 
-              className="cursor-pointer hover:bg-secondary/50"
-              onClick={() => {
-                setSelectedTask(task);
-                setEditDialogOpen(true);
-              }}
+      {/* Search and Filters */}
+      <div className="bg-secondary/50 p-4 rounded-lg space-y-4">
+        {/* Search Input */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm công việc theo tiêu đề hoặc mô tả..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white dark:bg-gray-700"
+            />
+          </div>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-xs"
             >
-              <TableCell>
-                <div>
-                  <p className="font-medium">{task.title}</p>
-                  {task.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {task.description}
-                    </p>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{task.status.replace('_', ' ')}</Badge>
-              </TableCell>
-              <TableCell>
-                <Badge>{task.priority}</Badge>
-              </TableCell>
-              <TableCell>
-                {task.assignee_id ? 'Assigned' : 'Unassigned'}
-              </TableCell>
-              <TableCell>
-                {task.deadline ? format(new Date(task.deadline), 'MMM dd, yyyy') : '-'}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {format(new Date(task.created_at), 'MMM dd, yyyy')}
-              </TableCell>
+              <X className="h-4 w-4 mr-1" />
+              Xóa lọc
+            </Button>
+          )}
+        </div>
+
+        {/* Filters Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Priority Filter */}
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="bg-white dark:bg-gray-700">
+              <SelectValue placeholder="Lọc theo ưu tiên" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Tất cả ưu tiên</SelectItem>
+              {uniquePriorities.map(priority => (
+                <SelectItem key={priority} value={priority}>
+                  {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Status Filter */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="bg-white dark:bg-gray-700">
+              <SelectValue placeholder="Lọc theo trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Tất cả trạng thái</SelectItem>
+              {uniqueStatuses.map(status => (
+                <SelectItem key={status} value={status}>
+                  {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Assignee Filter */}
+          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+            <SelectTrigger className="bg-white dark:bg-gray-700">
+              <SelectValue placeholder="Lọc theo người được giao" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Tất cả người được giao</SelectItem>
+              {uniqueAssignees.map(assigneeId => (
+                <SelectItem key={assigneeId} value={assigneeId}>
+                  ID: {assigneeId.substring(0, 8)}...
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground">
+          {filteredTasks.length === tasks.length
+            ? `Tổng cộng ${tasks.length} công việc`
+            : `Hiển thị ${filteredTasks.length} / ${tasks.length} công việc`}
+        </div>
+      </div>
+
+      {/* Tasks Table */}
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Task</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Assignee</TableHead>
+              <TableHead>Deadline</TableHead>
+              <TableHead>Created</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <TableRow
+                  key={task.id}
+                  className="cursor-pointer hover:bg-secondary/50"
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setEditDialogOpen(true);
+                  }}
+                >
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{task.title}</p>
+                      {task.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-1">
+                          {task.description}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{task.status.replace('_', ' ')}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge>{task.priority}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {task.assignee_id ? 'Assigned' : 'Unassigned'}
+                  </TableCell>
+                  <TableCell>
+                    {task.deadline ? format(new Date(task.deadline), 'MMM dd, yyyy') : '-'}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {format(new Date(task.created_at), 'MMM dd, yyyy')}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                  Không tìm thấy công việc nào phù hợp với bộ lọc của bạn
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
       <EditTaskDialog
         task={selectedTask}
         open={editDialogOpen}
