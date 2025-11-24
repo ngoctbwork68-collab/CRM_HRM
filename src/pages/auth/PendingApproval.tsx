@@ -35,15 +35,17 @@ const PendingApproval = () => {
       const userProfile = await getUserProfile(currentUser.id);
       setProfile(userProfile);
 
-      // Skip registration check as table doesn't exist
-      // User is assumed to be approved and can access dashboard
-      navigate('/dashboard');
-      return;
+      // Check if account is approved
+      if (userProfile?.account_status === 'APPROVED') {
+        navigate('/dashboard');
+        return;
+      }
+
+      setLoading(false);
     };
 
     checkStatus();
 
-    // No real-time subscription as table doesn't exist
     return () => {
       // Cleanup
     };
