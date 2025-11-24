@@ -238,6 +238,159 @@ const UsersManagement = () => {
         }
     };
 
+    // --- LOGIC THÊM NGƯỜI DÙNG MỚI ---
+    const handleCreateUser = async () => {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
+            toast({ title: "Lỗi", description: "Vui lòng điền đầy đủ thông tin bắt buộc.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Tạo profile mới với account_status = PENDING
+            const newUserId = crypto.randomUUID();
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: newUserId,
+                    email: formData.email,
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    phone: formData.phone,
+                    team_id: formData.team_id || null,
+                    shift_id: formData.shift_id || null,
+                    employment_status: formData.employment_status || null,
+                    account_status: 'PENDING',
+                });
+
+            if (profileError) throw profileError;
+
+            toast({
+                title: "Thành công",
+                description: `Tài khoản cho ${formData.first_name} ${formData.last_name} đã được tạo.`,
+            });
+
+            setIsCreateUserOpen(false);
+            resetFormData();
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi tạo user:", error);
+            toast({ variant: "destructive", title: "Lỗi tạo user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- LOGIC CẬP NHẬT NGƯỜI DÙNG ---
+    const handleEditUser = async () => {
+        if (!selectedUserForEdit) return;
+
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
+            toast({ title: "Lỗi", description: "Vui lòng điền đầy đủ thông tin bắt buộc.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    team_id: formData.team_id || null,
+                    shift_id: formData.shift_id || null,
+                    employment_status: formData.employment_status || null,
+                })
+                .eq('id', selectedUserForEdit.id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Thành công",
+                description: `Thông tin của ${formData.first_name} ${formData.last_name} đã được cập nhật.`,
+            });
+
+            setIsEditUserOpen(false);
+            setSelectedUserForEdit(null);
+            resetFormData();
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi cập nhật user:", error);
+            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- LOGIC XÓA NGƯỜI DÙNG ---
+    const handleDeleteUser = async (user: UserDetail) => {
+        setUserToDelete(user);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+
+        try {
+            setLoading(true);
+
+            // Xóa user roles
+            await supabase.from('user_roles').delete().eq('user_id', userToDelete.id);
+
+            // Xóa profile
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userToDelete.id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Thành công",
+                description: `Tài khoản ${userToDelete.first_name} ${userToDelete.last_name} đã được xóa.`,
+            });
+
+            setIsDeleteConfirmOpen(false);
+            setUserToDelete(null);
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi xóa user:", error);
+            toast({ variant: "destructive", title: "Lỗi xóa user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetFormData = () => {
+        setFormData({
+            first_name: '',
+            last_name: '',
+            email: '',
+            phone: '',
+            team_id: '',
+            shift_id: '',
+            employment_status: '',
+        });
+    };
+
+    const openEditDialog = (user: UserDetail) => {
+        setSelectedUserForEdit(user);
+        setFormData({
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            team_id: user.team_id || '',
+            shift_id: user.shift_id || '',
+            employment_status: user.employment_status || '',
+        });
+        setIsEditUserOpen(true);
+    };
+
 
     // --- FILTER LOGIC (ĐÃ SỬA LỖI LỌC ROLE CLIENT SIDE) ---
     const filteredUsers = useMemo(() => {
