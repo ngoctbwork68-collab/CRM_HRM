@@ -50,6 +50,24 @@ const UsersManagement = () => {
 
     const [isApprovingUser, setIsApprovingUser] = useState<string | null>(null);
 
+    // CREATE/EDIT USER STATE
+    const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+    const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+    const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserDetail | null>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<UserDetail | null>(null);
+
+    // Form state for create/edit
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        team_id: '',
+        shift_id: '',
+        employment_status: '',
+    });
+
     // FILTERS STATE
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<string>('all');
