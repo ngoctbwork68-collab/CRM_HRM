@@ -388,6 +388,38 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [assigneeFilter, setAssigneeFilter] = useState('all');
 
+    // Filter tasks based on search and filters
+    const filteredTasks = useMemo(() => {
+        return tasks.filter(task => {
+            const matchesSearch = searchQuery === '' ||
+                task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+            const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+            const matchesAssignee = assigneeFilter === 'all' || task.assignee_id === assigneeFilter;
+
+            return matchesSearch && matchesPriority && matchesAssignee;
+        });
+    }, [tasks, searchQuery, priorityFilter, assigneeFilter]);
+
+    const uniquePriorities = useMemo(() =>
+        ['all', ...new Set(tasks.map(t => t.priority))].filter(p => p !== 'all').concat(['all']),
+        [tasks]
+    );
+
+    const uniqueAssignees = useMemo(() =>
+        [...new Set(tasks.filter(t => t.assignee_id).map(t => t.assignee_id))],
+        [tasks]
+    );
+
+    const clearFilters = () => {
+        setSearchQuery('');
+        setPriorityFilter('all');
+        setAssigneeFilter('all');
+    };
+
+    const hasActiveFilters = searchQuery || priorityFilter !== 'all' || assigneeFilter !== 'all';
+
     const handleCreateColumn = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!columnName.trim()) {
