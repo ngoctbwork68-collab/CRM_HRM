@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'; 
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,45 +21,11 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogFooter, // Thêm DialogFooter
+    DialogFooter,
 } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit2, Loader2, AlertCircle, Search, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-
-// --- Khởi tạo Supabase Client (FIX: Sử dụng hàm giả lập để vượt qua lỗi biên dịch) ---
-
-// Hàm giả lập (Mock function) cho createClient để đáp ứng yêu cầu của trình biên dịch và TypeScript.
-// Trong môi trường thực tế, Supabase client sẽ được khởi tạo qua import hoặc cấu hình môi trường.
-function initializeSupabaseClient(url: string, key: string): Record<string, unknown> {
-    // Cấu trúc mock client cần có đủ các hàm mà useBoard hook đang sử dụng.
-    return {
-        from: () => ({
-            select: () => ({ 
-                eq: () => ({ 
-                    order: async () => ({ data: [], error: null }),
-                    // Thêm mock cho các hàm khác mà select có thể theo sau
-                }),
-                single: async () => ({ data: {}, error: null }),
-            }),
-            insert: () => ({ select: () => ({ single: async () => ({ data: {}, error: null }) }) }),
-            update: () => ({ eq: () => ({ select: () => ({ single: async () => ({ data: {}, error: null }) }) }) }),
-            delete: () => ({ eq: async () => ({ error: null }) }),
-        }),
-        auth: {
-            // Giả lập người dùng đã đăng nhập để các logic tiếp theo có thể ch���y
-            getUser: async () => ({ data: { user: { id: 'mock-user-id-a1b2c3d4' } }, error: null }),
-        },
-        // Mock cho Real-time subscriptions
-        channel: () => ({ on: () => ({ subscribe: () => ({}) }), subscribe: () => ({}), unsubscribe: () => ({}) }),
-        removeChannel: () => ({}),
-    };
-}
-
-const supabaseUrl = 'https://gnxadfydbnigwboojhgw.supabase.co'; // Đã thay thế VITE_SUPABASE_URL
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdueGFkZnlkYm5pZ3dib29qaGd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxNDM5MDIsImV4cCI6MjA3ODcxOTkwMn0.Ul6InKjAyCOpzzecsdURtP9ighcneJEGWt1z2X9zPSc'; // Đã thay thế VITE_SUPABASE_PUBLISHABLE_KEY
-const supabase = initializeSupabaseClient(supabaseUrl, supabaseAnonKey);
-// ---------------------------------------------------------------------
 
 // Khai báo lại các interface Task và Field để tránh lỗi alias trong môi trường single file
 interface Field {
@@ -89,9 +56,7 @@ interface Task {
     completed_at: string | null;
 }
 
-// --- MOCK/DUPLICATE useBoard HOOK LOGIC (Đã sửa lỗi RLS và thêm logic teamId) ---
-// CHÚ Ý: Logic này cần được tách ra thành file '@/hooks/use-board' trong môi trường thực tế.
-
+// --- useBoard HOOK LOGIC ---
 const useBoard = (teamId: string) => {
     const { toast } = useToast();
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -153,7 +118,8 @@ const useBoard = (teamId: string) => {
         if (!teamId) return;
 
         try {
-            const userId = (await supabase.auth.getUser()).data.user?.id;
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            const userId = userData.user?.id;
             if (!userId) throw new Error('User not authenticated');
 
             const { data, error } = await supabase
@@ -321,8 +287,6 @@ const useBoard = (teamId: string) => {
         getTasksInField,
     };
 };
-// --- END useBoard HOOK LOGIC ---
-
 
 interface KanbanBoardProps {
     teamId: string;
@@ -546,7 +510,7 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Tạo C��t Mới</DialogTitle>
+                            <DialogTitle>Tạo Cột Mới</DialogTitle>
                             <DialogDescription>Thêm một cột mới vào bảng của bạn (ví dụ: Đang làm, Chờ duyệt).</DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleCreateColumn} className="space-y-4">
@@ -775,7 +739,6 @@ interface TaskCardProps {
 }
 
 const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
-    // Sửa lỗi: Thay thế `confirm()` bằng Dialog
     const [isOpen, setIsOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [formData, setFormData] = useState(task);
@@ -804,7 +767,6 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
         }
     };
 
-    // Khi Dialog Edit mở, cập nhật form data (vì task có thể đã được cập nhật từ bên ngoài)
     useEffect(() => {
         setFormData(task);
     }, [task]);
@@ -837,7 +799,6 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
                 </CardContent>
             </Card>
 
-            {/* DIALOG CHỈNH SỬA CÔNG VIỆC */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -853,7 +814,6 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
                                 disabled={isLoading}
                             />
                         </div>
-                        {/* Thêm các trường khác */}
                         <div>
                             <Label htmlFor="edit-priority">Ưu tiên</Label>
                             <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v as 'low' | 'medium' | 'high' | 'urgent' })}>
@@ -913,13 +873,12 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
                 </DialogContent>
             </Dialog>
 
-            {/* DIALOG XÁC NHẬN XÓA */}
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Xác nhận Xóa Công việc</DialogTitle>
                         <DialogDescription>
-                            Bạn có chắc chắn muốn xóa công việc "{task.title}" không? Hành đ��ng này không thể hoàn tác.
+                            Bạn có chắc chắn muốn xóa công việc "{task.title}" không? Hành động này không thể hoàn tác.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -977,7 +936,6 @@ const ColumnMenu = ({ field, onDelete, onUpdate }: ColumnMenuProps) => {
 
     return (
         <>
-            {/* DIALOG CHỈNH SỬA CỘT */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="hover:bg-gray-200 dark:hover:bg-gray-600">
@@ -1019,7 +977,6 @@ const ColumnMenu = ({ field, onDelete, onUpdate }: ColumnMenuProps) => {
                 </DialogContent>
             </Dialog>
 
-            {/* DIALOG XÁC NHẬN XÓA CỘT */}
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
                     <DialogHeader>

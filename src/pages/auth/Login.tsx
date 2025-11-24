@@ -106,15 +106,21 @@ const Login = () => {
                 return;
             }
 
-            // Get current user and check registration status
+            // Get current user and check account status
             const user = await getCurrentUser();
             if (!user) {
                 navigate("/auth/login");
                 return;
             }
 
-            // Skip registration check as table doesn't exist
-            // User is assumed to be approved if they can log in
+            // Check account status from profile
+            const profile = await import("@/lib/auth").then(m => m.getUserProfile(user.id));
+
+            if (profile?.account_status !== 'APPROVED') {
+                // Redirect to pending approval page
+                navigate("/auth/pending-approval");
+                return;
+            }
 
             toast({
                 title: "Chào mừng trở lại!",
@@ -205,23 +211,15 @@ const Login = () => {
                 }
             }
 
-            // Skip registration record as table doesn't exist
-            // User is created and can log in directly
-
             toast({
                 title: "✓ Đăng ký Thành công!",
-                description: "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để chờ Admin phê duyệt."
+                description: "Tài khoản của bạn đã được tạo. Đang chuyển hướng..."
             });
 
-            // Clear signup form
-            setSignupFirstName("");
-            setSignupLastName("");
-            setSignupEmail("");
-            setSignupPassword("");
-            setSignupPhone("");
-            setSignupDepartment("");
-            setSignupEmploymentStatus("");
-            setCvFile(null);
+            // Redirect to pending approval page
+            setTimeout(() => {
+                navigate("/auth/pending-approval");
+            }, 1500);
 
         } catch (error: any) {
             toast({

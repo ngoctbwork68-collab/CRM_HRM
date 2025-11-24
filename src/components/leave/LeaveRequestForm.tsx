@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getUserProfile } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { TablesInsert, Enums } from "@/integrations/supabase/types";
-import { Send, Clock } from "lucide-react"; // Thêm icon
+import { Send, Clock, AlertCircle } from "lucide-react";
 
 // Kiểu enum từ Supabase
 type LeaveType = Enums<'leave_type'>;
@@ -17,13 +17,45 @@ type LeaveInsert = TablesInsert<'leave_requests'>;
 type WorkHourType = 'FULL' | 'HALF_AM' | 'HALF_PM'; // Kiểu tùy chọn cho ngày công
 
 const LeaveRequestForm = () => {
-    const [leaveType, setLeaveType] = useState<LeaveType>("annual"); // Loại nghỉ phép (annual, sick, ...)
-    const [workHourType, setWorkHourType] = useState<WorkHourType>("FULL"); // Ngày công áp dụng (Full, Half AM/PM)
+    const [leaveType, setLeaveType] = useState<LeaveType>("annual");
+    const [workHourType, setWorkHourType] = useState<WorkHourType>("FULL");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [reason, setReason] = useState("");
     const [loading, setLoading] = useState(false);
+    const [leaveBalance, setLeaveBalance] = useState(0);
+    const [estimatedDays, setEstimatedDays] = useState(0);
     const { toast } = useToast();
+
+    // Load user's leave balance
+    useEffect(() => {
+        const loadBalance = async () => {
+            const user = await getCurrentUser();
+            if (user) {
+                const profile = await getUserProfile(user.id);
+                if (profile) {
+                    setLeaveBalance(profile.annual_leave_balance);
+                }
+            }
+        };
+        loadBalance();
+    }, []);
+
+    // Calculate estimated days
+    useEffect(() => {
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (start <= end) {
+                let days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                // Adjust for half days
+                if (workHourType === 'HALF_AM' || workHourType === 'HALF_PM') {
+                    days = days - 0.5;
+                }
+                setEstimatedDays(days);
+            }
+        }
+    }, [startDate, endDate, workHourType]);
 
     // Xử lý Select Type (ép kiểu an toàn)
     const handleLeaveTypeChange = (value: string) => {
@@ -40,19 +72,17 @@ const LeaveRequestForm = () => {
         e.preventDefault();
         setLoading(true);
 
-        // Kiểm tra điều kiện ngày
-        if (new Date(startDate) > new Date(endDate)) {
-             toast({
-                title: "Lỗi",
-                description: "Ngày kết thúc không được trước ngày bắt đầu.",
-                variant: "destructive",
-            });
-            setLoading(false);
-            return;
-        }
-
-
         try {
+            // Kiểm tra điều kiện ngày
+            if (new Date(startDate) > new Date(endDate)) {
+                throw new Error("Ngày kết thúc không được trước ngày bắt đầu.");
+            }
+
+            // Kiểm tra hạn mức nghỉ phép cho loại Annual
+            if (leaveType === 'annual' && estimatedDays > leaveBalance) {
+                throw new Error(`Bạn chỉ còn ${leaveBalance} ngày nghỉ phép, nhưng yêu cầu ${estimatedDays} ngày.`);
+            }
+
             const user = await getCurrentUser();
             if (!user) throw new Error("Chưa xác thực người dùng.");
 
@@ -63,7 +93,7 @@ const LeaveRequestForm = () => {
                 type: leaveType,
                 start_date: startDate,
                 end_date: endDate,
-                reason: descriptionDetail, // Gửi cả thông tin ngày công kèm theo lý do
+                reason: descriptionDetail,
                 status: "pending",
             };
 
@@ -73,7 +103,7 @@ const LeaveRequestForm = () => {
 
             toast({
                 title: "Yêu cầu đã gửi thành công",
-                description: "Yêu cầu nghỉ phép của bạn đang chờ phê duyệt.",
+                description: `Yêu cầu nghỉ phép ${estimatedDays} ngày của bạn đang chờ phê duyệt.`,
             });
 
             resetForm();
@@ -81,7 +111,7 @@ const LeaveRequestForm = () => {
             console.error("Lỗi gửi yêu cầu nghỉ phép:", error);
             toast({
                 title: "Lỗi",
-                description: "Không thể gửi yêu cầu nghỉ phép. Vui lòng thử lại.",
+                description: error instanceof Error ? error.message : "Không thể gửi yêu cầu nghỉ phép. Vui lòng thử lại.",
                 variant: "destructive",
             });
         } finally {
@@ -108,6 +138,30 @@ const LeaveRequestForm = () => {
 
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* Leave Balance Info for Annual Leave */}
+                    {leaveType === 'annual' && (
+                        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex gap-3">
+                            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 text-sm">
+                                <p className="font-semibold text-blue-900 dark:text-blue-100">Thông tin Nghỉ phép Năm</p>
+                                <p className="text-blue-800 dark:text-blue-300 mt-1">
+                                    Số ngày còn lại: <span className="font-bold text-lg">{leaveBalance}</span> ngày
+                                    {estimatedDays > 0 && (
+                                        <>
+                                            <br />
+                                            Dự kiến sử dụng: <span className="font-bold">{estimatedDays}</span> ngày
+                                            {estimatedDays <= leaveBalance ? (
+                                                <span className="text-green-700 dark:text-green-400 ml-2">✓</span>
+                                            ) : (
+                                                <span className="text-red-700 dark:text-red-400 ml-2">✗ Vượt quá</span>
+                                            )}
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* DÒNG 1: LOẠI NGHỈ PHÉP */}
                     <div>

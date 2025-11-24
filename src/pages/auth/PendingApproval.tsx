@@ -35,15 +35,17 @@ const PendingApproval = () => {
       const userProfile = await getUserProfile(currentUser.id);
       setProfile(userProfile);
 
-      // Skip registration check as table doesn't exist
-      // User is assumed to be approved and can access dashboard
-      navigate('/dashboard');
-      return;
+      // Check if account is approved
+      if (userProfile?.account_status === 'APPROVED') {
+        navigate('/dashboard');
+        return;
+      }
+
+      setLoading(false);
     };
 
     checkStatus();
 
-    // No real-time subscription as table doesn't exist
     return () => {
       // Cleanup
     };
@@ -53,16 +55,18 @@ const PendingApproval = () => {
     setIsRefreshing(true);
     const currentUser = await getCurrentUser();
     if (currentUser) {
-      const { data } = await supabase
-        .from('user_registrations')
-        .select('status, created_at, rejection_reason, reapplication_count')
-        .eq('user_id', currentUser.id)
-        .single();
+      const userProfile = await getUserProfile(currentUser.id);
+      setProfile(userProfile);
 
-      if (data && data.status === 'approved') {
+      if (userProfile?.account_status === 'APPROVED') {
         navigate('/dashboard');
-      } else if (data) {
-        setRegistration(data);
+      } else if (userProfile) {
+        setRegistration({
+          status: userProfile.account_status === 'REJECTED' ? 'rejected' : 'pending',
+          created_at: userProfile.created_at || new Date().toISOString(),
+          rejection_reason: undefined,
+          reapplication_count: 0
+        });
       }
     }
     setIsRefreshing(false);
@@ -90,10 +94,10 @@ const PendingApproval = () => {
     );
   }
 
-  const isRejected = registration?.status === 'rejected';
-  const daysWaiting = registration
+  const isRejected = profile?.account_status === 'REJECTED';
+  const daysWaiting = profile?.created_at
     ? Math.floor(
-        (new Date().getTime() - new Date(registration.created_at).getTime()) /
+        (new Date().getTime() - new Date(profile.created_at).getTime()) /
         (1000 * 60 * 60 * 24)
       )
     : 0;

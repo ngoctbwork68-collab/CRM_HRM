@@ -294,7 +294,7 @@ const DailyAttendanceWidget = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'attendance_sessions',
+          table: 'attendance',
           filter: `user_id=eq.${userId}`
         },
         () => {
@@ -316,15 +316,14 @@ const DailyAttendanceWidget = () => {
     try {
       const location = await getLocation();
       const checkInTime = new Date().toISOString();
-      const today = new Date().toISOString().split('T')[0];
 
       const { error } = await supabase
-        .from('attendance_sessions')
+        .from('attendance')
         .insert({
           user_id: userId,
-          session_date: today,
-          check_in: checkInTime,
-          location_checkin: location
+          timestamp: checkInTime,
+          type: 'check_in',
+          location: location
         });
 
       if (error) throw new Error(error.message);

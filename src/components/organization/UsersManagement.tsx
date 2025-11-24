@@ -50,6 +50,24 @@ const UsersManagement = () => {
 
     const [isApprovingUser, setIsApprovingUser] = useState<string | null>(null);
 
+    // CREATE/EDIT USER STATE
+    const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+    const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+    const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserDetail | null>(null);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<UserDetail | null>(null);
+
+    // Form state for create/edit
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        team_id: '',
+        shift_id: '',
+        employment_status: '',
+    });
+
     // FILTERS STATE
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<string>('all');
@@ -149,26 +167,21 @@ const UsersManagement = () => {
             const userId = selectedUserForRole.id;
             const newTeamId = selectedTeam === 'none' ? null : selectedTeam;
             const newShiftId = selectedShift === 'none' ? null : selectedShift;
-            
+
             // 1. CẬP NHẬT VỊ TRÍ (PROFILE)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: profileError } = await supabase
                 .from('profiles')
-                .update({ team_id: newTeamId, shift_id: newShiftId } as unknown) 
+                .update({ team_id: newTeamId, shift_id: newShiftId } as unknown)
                 .eq('id', userId);
 
             if (profileError) throw profileError;
 
-            // 2. CẬP NHẬT VAI TRÒ (USER_ROLES)
-            // 2a. Xóa role cũ
-            const { error: deleteError } = await supabase.from('user_roles').delete().eq('user_id', userId);
-            if (deleteError) throw deleteError;
-
-            // 2b. Chèn role mới
+            // 2. CẬP NHẬT VAI TRÒ (USER_ROLES) - Sử dụng UPSERT thay vì DELETE + INSERT
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: roleError } = await supabase
                 .from('user_roles')
-                .insert({ user_id: userId, role: selectedNewRole as any });
+                .upsert({ user_id: userId, role: selectedNewRole } as unknown, { onConflict: 'user_id' });
 
             if (roleError) throw roleError;
 
@@ -180,6 +193,8 @@ const UsersManagement = () => {
             setIsRoleModalOpen(false);
             setSelectedUserForRole(null);
             setSelectedNewRole('');
+            setSelectedTeam('');
+            setSelectedShift('');
             await fetchUsers();
         } catch (error) {
             console.error("Lỗi cập nhật:", error);
@@ -221,6 +236,159 @@ const UsersManagement = () => {
         } finally {
             setIsApprovingUser(null);
         }
+    };
+
+    // --- LOGIC THÊM NGƯỜI DÙNG MỚI ---
+    const handleCreateUser = async () => {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
+            toast({ title: "Lỗi", description: "Vui lòng điền đầy đủ thông tin bắt buộc.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Tạo profile mới với account_status = PENDING
+            const newUserId = crypto.randomUUID();
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: newUserId,
+                    email: formData.email,
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    phone: formData.phone,
+                    team_id: formData.team_id || null,
+                    shift_id: formData.shift_id || null,
+                    employment_status: formData.employment_status || null,
+                    account_status: 'PENDING',
+                });
+
+            if (profileError) throw profileError;
+
+            toast({
+                title: "Thành công",
+                description: `Tài khoản cho ${formData.first_name} ${formData.last_name} đã được tạo.`,
+            });
+
+            setIsCreateUserOpen(false);
+            resetFormData();
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi tạo user:", error);
+            toast({ variant: "destructive", title: "Lỗi tạo user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- LOGIC CẬP NHẬT NGƯỜI DÙNG ---
+    const handleEditUser = async () => {
+        if (!selectedUserForEdit) return;
+
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
+            toast({ title: "Lỗi", description: "Vui lòng điền đầy đủ thông tin bắt buộc.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    team_id: formData.team_id || null,
+                    shift_id: formData.shift_id || null,
+                    employment_status: formData.employment_status || null,
+                })
+                .eq('id', selectedUserForEdit.id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Thành c��ng",
+                description: `Thông tin của ${formData.first_name} ${formData.last_name} đã được cập nhật.`,
+            });
+
+            setIsEditUserOpen(false);
+            setSelectedUserForEdit(null);
+            resetFormData();
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi cập nhật user:", error);
+            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- LOGIC XÓA NGƯỜI DÙNG ---
+    const handleDeleteUser = async (user: UserDetail) => {
+        setUserToDelete(user);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+
+        try {
+            setLoading(true);
+
+            // Xóa user roles
+            await supabase.from('user_roles').delete().eq('user_id', userToDelete.id);
+
+            // Xóa profile
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userToDelete.id);
+
+            if (error) throw error;
+
+            toast({
+                title: "Thành công",
+                description: `Tài khoản ${userToDelete.first_name} ${userToDelete.last_name} đã được xóa.`,
+            });
+
+            setIsDeleteConfirmOpen(false);
+            setUserToDelete(null);
+            await fetchUsers();
+        } catch (error) {
+            console.error("Lỗi xóa user:", error);
+            toast({ variant: "destructive", title: "Lỗi xóa user", description: (error as Error).message });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetFormData = () => {
+        setFormData({
+            first_name: '',
+            last_name: '',
+            email: '',
+            phone: '',
+            team_id: '',
+            shift_id: '',
+            employment_status: '',
+        });
+    };
+
+    const openEditDialog = (user: UserDetail) => {
+        setSelectedUserForEdit(user);
+        setFormData({
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            team_id: user.team_id || '',
+            shift_id: user.shift_id || '',
+            employment_status: user.employment_status || '',
+        });
+        setIsEditUserOpen(true);
     };
 
 
@@ -378,8 +546,7 @@ const UsersManagement = () => {
                                             onClick={() => {
                                                 setSelectedUserForRole(user);
                                                 setSelectedNewRole(getPrimaryRole(user.user_roles).toLowerCase());
-                                                // Đặt giá trị team và shift hiện tại vào state modal
-                                                setSelectedTeam(user.team_id || 'none'); 
+                                                setSelectedTeam(user.team_id || 'none');
                                                 setSelectedShift(user.shift_id || 'none');
                                                 setIsRoleModalOpen(true);
                                             }}
@@ -387,6 +554,24 @@ const UsersManagement = () => {
                                             Gán Vai trò & Vị trí
                                         </Button>
                                     )}
+
+                                    {/* Chỉnh sửa */}
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openEditDialog(user)}
+                                    >
+                                        <Edit className="h-4 w-4 mr-1" /> Chỉnh sửa
+                                    </Button>
+
+                                    {/* Xóa */}
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDeleteUser(user)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
                         </TableCell>
@@ -501,47 +686,284 @@ const UsersManagement = () => {
             
             {/* Nút Thêm User */}
             <div className="flex justify-start">
-                <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+                <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-primary hover:bg-primary/90">
                             <Plus className="h-4 w-4 mr-2" />
                             Thêm Người dùng
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-lg">
                         <DialogHeader>
                             <DialogTitle>Thêm Người dùng Mới</DialogTitle>
-                            <DialogDescription>Chức năng này sẽ yêu cầu người dùng đăng ký hoặc cần Service Role để tạo tài khoản trực tiếp.</DialogDescription>
+                            <DialogDescription>Nhập thông tin người dùng mới. Họ sẽ nhận được email để thiết lập mật khẩu.</DialogDescription>
                         </DialogHeader>
-                        {/* Form Thêm Người dùng sẽ được đặt ở đây */}
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="create-first-name">Họ *</Label>
+                                    <Input
+                                        id="create-first-name"
+                                        value={formData.first_name}
+                                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                        placeholder="Ví dụ: Nguyễn"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="create-last-name">Tên *</Label>
+                                    <Input
+                                        id="create-last-name"
+                                        value={formData.last_name}
+                                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                                        placeholder="Ví dụ: Văn A"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="create-email">Email *</Label>
+                                <Input
+                                    id="create-email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder="user@example.com"
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="create-phone">Số điện thoại *</Label>
+                                <Input
+                                    id="create-phone"
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    placeholder="0123456789"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label htmlFor="create-team">Đội nhóm</Label>
+                                    <Select value={formData.team_id} onValueChange={(v) => setFormData({ ...formData, team_id: v })}>
+                                        <SelectTrigger id="create-team" className="h-10"><SelectValue placeholder="Chọn đội" /></SelectTrigger>
+                                        <SelectContent>
+                                            {allTeams.map(team => (
+                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="create-shift">Ca làm việc</Label>
+                                    <Select value={formData.shift_id} onValueChange={(v) => setFormData({ ...formData, shift_id: v })}>
+                                        <SelectTrigger id="create-shift" className="h-10"><SelectValue placeholder="Chọn ca" /></SelectTrigger>
+                                        <SelectContent>
+                                            {allShifts.map(shift => (
+                                                <SelectItem key={shift.id} value={shift.id}>{shift.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="create-employment">Tình trạng</Label>
+                                <Select value={formData.employment_status} onValueChange={(v) => setFormData({ ...formData, employment_status: v })}>
+                                    <SelectTrigger id="create-employment" className="h-10"><SelectValue placeholder="Chọn tình trạng" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Employed">Đang làm việc</SelectItem>
+                                        <SelectItem value="Student">Sinh viên</SelectItem>
+                                        <SelectItem value="Trainee">Thực tập sinh</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button className="w-full" onClick={handleCreateUser} disabled={loading}>
+                                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                                Tạo người dùng
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
             
-            {/* Modal Gán Vai trò */}
+            {/* Modal Gán Vai trò & Vị trí */}
             <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Gán vai trò cho {selectedUserForRole?.first_name} {selectedUserForRole?.last_name}</DialogTitle>
-                        <DialogDescription>Chọn vai trò mới cho người dùng này.</DialogDescription>
+                        <DialogDescription>Cập nhật vai trò, đội nhóm, và ca làm việc.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
-                        <Label htmlFor="role-select">Vai trò</Label>
-                        <Select value={selectedNewRole} onValueChange={setSelectedNewRole}>
-                            <SelectTrigger id="role-select" className="h-10"><SelectValue placeholder="Chọn vai trò" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="hr">HR</SelectItem>
-                                <SelectItem value="leader">Leader</SelectItem>
-                                <SelectItem value="teacher">Teacher</SelectItem>
-                                <SelectItem value="it">IT</SelectItem>
-                                <SelectItem value="content">Content</SelectItem>
-                                <SelectItem value="design">Design</SelectItem>
-                                <SelectItem value="staff">Staff</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button className="w-full" onClick={handleUpdateRoleAndPosition}>
-                            Cập nhật vai trò
+                        <div>
+                            <Label htmlFor="role-select">Vai trò</Label>
+                            <Select value={selectedNewRole} onValueChange={setSelectedNewRole}>
+                                <SelectTrigger id="role-select" className="h-10"><SelectValue placeholder="Chọn vai trò" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="hr">HR</SelectItem>
+                                    <SelectItem value="leader">Leader</SelectItem>
+                                    <SelectItem value="teacher">Teacher</SelectItem>
+                                    <SelectItem value="it">IT</SelectItem>
+                                    <SelectItem value="content">Content</SelectItem>
+                                    <SelectItem value="design">Design</SelectItem>
+                                    <SelectItem value="staff">Staff</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="team-select">Đội nhóm</Label>
+                            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                                <SelectTrigger id="team-select" className="h-10"><SelectValue placeholder="Chọn đội nhóm" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Không có</SelectItem>
+                                    {allTeams.map(team => (
+                                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="shift-select">Ca làm việc</Label>
+                            <Select value={selectedShift} onValueChange={setSelectedShift}>
+                                <SelectTrigger id="shift-select" className="h-10"><SelectValue placeholder="Chọn ca làm việc" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Không có</SelectItem>
+                                    {allShifts.map(shift => (
+                                        <SelectItem key={shift.id} value={shift.id}>{shift.name} ({shift.start_time} - {shift.end_time})</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Button className="w-full" onClick={handleUpdateRoleAndPosition} disabled={loading}>
+                            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Cập nhật vai trò & vị trí
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal Chỉnh sửa Người dùng */}
+            <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Chỉnh sửa Người dùng</DialogTitle>
+                        <DialogDescription>Cập nhật thông tin chi tiết cho người dùng.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label htmlFor="edit-first-name">Họ *</Label>
+                                <Input
+                                    id="edit-first-name"
+                                    value={formData.first_name}
+                                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                    placeholder="Ví dụ: Nguyễn"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="edit-last-name">Tên *</Label>
+                                <Input
+                                    id="edit-last-name"
+                                    value={formData.last_name}
+                                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                                    placeholder="Ví dụ: Văn A"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="edit-email">Email *</Label>
+                            <Input
+                                id="edit-email"
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                placeholder="user@example.com"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="edit-phone">Số điện thoại *</Label>
+                            <Input
+                                id="edit-phone"
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                placeholder="0123456789"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label htmlFor="edit-team">Đội nhóm</Label>
+                                <Select value={formData.team_id} onValueChange={(v) => setFormData({ ...formData, team_id: v })}>
+                                    <SelectTrigger id="edit-team" className="h-10"><SelectValue placeholder="Chọn đội" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Không có</SelectItem>
+                                        {allTeams.map(team => (
+                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="edit-shift">Ca làm việc</Label>
+                                <Select value={formData.shift_id} onValueChange={(v) => setFormData({ ...formData, shift_id: v })}>
+                                    <SelectTrigger id="edit-shift" className="h-10"><SelectValue placeholder="Chọn ca" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Không có</SelectItem>
+                                        {allShifts.map(shift => (
+                                            <SelectItem key={shift.id} value={shift.id}>{shift.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="edit-employment">Tình trạng</Label>
+                            <Select value={formData.employment_status} onValueChange={(v) => setFormData({ ...formData, employment_status: v })}>
+                                <SelectTrigger id="edit-employment" className="h-10"><SelectValue placeholder="Chọn tình trạng" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">Không xác định</SelectItem>
+                                    <SelectItem value="Employed">Đang làm việc</SelectItem>
+                                    <SelectItem value="Student">Sinh viên</SelectItem>
+                                    <SelectItem value="Trainee">Thực tập sinh</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Button className="w-full" onClick={handleEditUser} disabled={loading}>
+                            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Cập nhật thông tin
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Xác nhận Xóa */}
+            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Xác nhận Xóa Người dùng</DialogTitle>
+                        <DialogDescription>
+                            Bạn có chắc chắn muốn xóa tài khoản của <strong>{userToDelete?.first_name} {userToDelete?.last_name}</strong> không? Hành động này không thể hoàn tác.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex gap-3 justify-end">
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+                            Hủy
+                        </Button>
+                        <Button variant="destructive" onClick={confirmDeleteUser} disabled={loading}>
+                            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Xóa
                         </Button>
                     </div>
                 </DialogContent>

@@ -43,22 +43,38 @@ const LeaveHistory = ({ role }: { role: UserRole }) => {
 
             let query = supabase
                 .from('leave_requests')
-                // FIX LỖI 400: Đã giữ cú pháp JOIN để lấy tên người dùng
-                .select(`
-                    *,
-                    profiles!leave_requests_user_id_fkey (first_name, last_name)
-                `)
+                .select(`*`)
                 .order('created_at', { ascending: false });
 
             if (role === 'staff') {
                 query = query.eq('user_id', user.id);
             }
 
-            const { data, error } = await query;
+            const { data: leavesData, error } = await query;
             if (error) throw error;
-            
-            // Ép kiểu mạnh mẽ qua 'unknown'
-            setLeaves((data as unknown as LeaveRequest[]) || []);
+
+            // Fetch profiles separately and merge
+            if (leavesData && leavesData.length > 0) {
+                const userIds = [...new Set(leavesData.map((l: any) => l.user_id))];
+                const { data: profilesData } = await supabase
+                    .from('profiles')
+                    .select('id, first_name, last_name')
+                    .in('id', userIds);
+
+                const profilesMap = new Map();
+                profilesData?.forEach((p: any) => {
+                    profilesMap.set(p.id, { first_name: p.first_name, last_name: p.last_name });
+                });
+
+                const leavesWithProfiles = (leavesData as any[]).map(leave => ({
+                    ...leave,
+                    profiles: profilesMap.get(leave.user_id) || null
+                }));
+
+                setLeaves(leavesWithProfiles as LeaveRequest[]);
+            } else {
+                setLeaves([]);
+            }
         } catch (error) {
             console.error('Lỗi khi lấy dữ liệu nghỉ phép:', error);
             toast({ title: "Lỗi", description: "Không thể tải lịch sử nghỉ phép.", variant: "destructive" });
@@ -88,20 +104,48 @@ const LeaveHistory = ({ role }: { role: UserRole }) => {
             const user = await getCurrentUser();
             if (!user) return;
 
+            // Find the leave request to calculate days
+            const leave = leaves.find(l => l.id === leaveId);
+            if (!leave) throw new Error('Không tìm thấy yêu cầu nghỉ phép');
+
+            // Calculate number of days
+            const startDate = new Date(leave.start_date);
+            const endDate = new Date(leave.end_date);
+            const daysRequested = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Update leave request status
             const updatePayload: Partial<LeaveRequestBase> = {
-                status: 'approved', 
+                status: 'approved',
                 approved_by: user.id,
                 approved_at: new Date().toISOString()
             };
 
-            const { error } = await supabase
+            const { error: updateError } = await supabase
                 .from('leave_requests')
                 .update(updatePayload)
                 .eq('id', leaveId);
 
-            if (error) throw error;
+            if (updateError) throw updateError;
 
-            toast({ title: "Thành công", description: "Yêu cầu nghỉ phép đã được phê duyệt" });
+            // Update user's annual leave balance if it's annual leave type
+            if (leave.type === 'annual') {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('annual_leave_balance')
+                    .eq('id', leave.user_id)
+                    .single();
+
+                if (profile) {
+                    const newBalance = Math.max(0, profile.annual_leave_balance - daysRequested);
+                    await supabase
+                        .from('profiles')
+                        .update({ annual_leave_balance: newBalance })
+                        .eq('id', leave.user_id);
+                }
+            }
+
+            toast({ title: "Thành công", description: `Yêu cầu nghỉ phép đã được phê duyệt (${daysRequested} ngày)` });
+            await fetchLeaves();
         } catch (error) {
             console.error('Lỗi khi phê duyệt:', error);
             toast({ title: "Lỗi", description: "Không thể phê duyệt yêu cầu nghỉ phép", variant: "destructive" });

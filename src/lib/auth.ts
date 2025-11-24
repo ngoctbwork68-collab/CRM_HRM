@@ -14,6 +14,8 @@ export interface UserProfile {
   phone: string | null;
   date_of_birth: string | null;
   annual_leave_balance: number;
+  account_status?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
+  created_at?: string;
 }
 
 export const getCurrentUser = async (): Promise<User | null> => {
@@ -88,6 +90,7 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
         team_id: null,
         shift_id: null,
         annual_leave_balance: 0,
+        account_status: 'PENDING',
       });
     } catch (profileError) {
       console.error('Error creating profile:', profileError);
