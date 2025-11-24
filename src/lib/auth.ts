@@ -50,6 +50,17 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return data as UserProfile;
 };
 
+export const getApprovalStatus = async (userId: string): Promise<'pending' | 'approved' | 'rejected' | null> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('approval_status')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) return null;
+  return data.approval_status as 'pending' | 'approved' | 'rejected';
+};
+
 export const signIn = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
