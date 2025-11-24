@@ -94,10 +94,10 @@ const PendingApproval = () => {
     );
   }
 
-  const isRejected = registration?.status === 'rejected';
-  const daysWaiting = registration
+  const isRejected = profile?.account_status === 'REJECTED';
+  const daysWaiting = profile?.created_at
     ? Math.floor(
-        (new Date().getTime() - new Date(registration.created_at).getTime()) /
+        (new Date().getTime() - new Date(profile.created_at).getTime()) /
         (1000 * 60 * 60 * 24)
       )
     : 0;
@@ -170,7 +170,7 @@ const PendingApproval = () => {
                       Thông Báo Email
                     </h4>
                     <p className="text-sm text-orange-800 dark:text-orange-200">
-                      Chúng tôi sẽ gửi email cho bạn khi tài khoản được phê duyệt. Hãy chắc chắn kiểm tra cả thư m��c Spam.
+                      Chúng tôi sẽ gửi email cho bạn khi tài khoản được phê duyệt. Hãy chắc chắn kiểm tra cả thư mục Spam.
                     </p>
                   </div>
                 </div>
