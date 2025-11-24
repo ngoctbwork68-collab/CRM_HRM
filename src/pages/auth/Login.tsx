@@ -113,8 +113,31 @@ const Login = () => {
                 return;
             }
 
-            // Skip registration check as table doesn't exist
-            // User is assumed to be approved if they can log in
+            // Check approval status
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('approval_status')
+                .eq('id', user.id)
+                .single();
+
+            if (profile?.approval_status === 'pending') {
+                toast({
+                    title: "Chờ Phê Duyệt",
+                    description: "Tài khoản của bạn đang chờ được phê duyệt bởi Admin/HR"
+                });
+                navigate("/pending-approval");
+                return;
+            }
+
+            if (profile?.approval_status === 'rejected') {
+                toast({
+                    variant: "destructive",
+                    title: "Đăng Ký Bị Từ Chối",
+                    description: "Vui lòng liên hệ bộ phận HR để biết thêm chi tiết"
+                });
+                navigate("/pending-approval");
+                return;
+            }
 
             toast({
                 title: "Chào mừng trở lại!",
