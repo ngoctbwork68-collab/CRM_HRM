@@ -197,26 +197,47 @@ const UsersManagement = () => {
             setSelectedShift('');
             await fetchUsers();
         } catch (error) {
-            console.error("Lỗi cập nhật:", error);
-            toast({ variant: "destructive", title: "Lỗi cập nhật", description: (error as Error).message, });
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Lỗi cập nhật:", errorMessage);
+            toast({ variant: "destructive", title: "Lỗi cập nhật", description: errorMessage });
         } finally {
             setLoading(false);
         }
     };
     
-    // --- APPROVE/REJECT USER FUNCTIONS ---
+    // --- APPROVE/REJECT USER FUNCTIONS (DUAL-APPROVAL SYSTEM) ---
     const handleApproveUser = async (userId: string, userName: string) => {
         setIsApprovingUser(userId);
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await supabase.from('profiles').update({ account_status: 'APPROVED' } as any).eq('id', userId);
-            
-            // Gán role staff mặc định
-            await supabase.from('user_roles').upsert({ user_id: userId, role: 'staff' }, { onConflict: 'user_id' }).select();
+            // Get the registration record
+            const { data: regData } = await supabase
+                .from('user_registrations')
+                .select('id')
+                .eq('user_id', userId)
+                .single();
 
-            toast({ title: "Phê duyệt thành công", description: `Tài khoản ${userName} đã được phê duyệt.`, });
+            if (!regData) {
+                toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy record đăng ký.", });
+                setIsApprovingUser(null);
+                return;
+            }
+
+            // Call the dual-approval RPC function
+            const { data, error } = await supabase.rpc('approve_user_registration', {
+                p_registration_id: regData.id,
+                p_role: 'staff',
+                p_approval_by: 'admin'
+            });
+
+            if (error) throw error;
+
+            toast({
+                title: "Phê duyệt từ Admin thành công",
+                description: `Admin đã phê duyệt tài khoản ${userName}. Đang chờ phê duyệt từ HR.`,
+            });
             await fetchUsers();
         } catch (error) {
+            console.error('Lỗi phê duyệt:', error);
             toast({ variant: "destructive", title: "Lỗi phê duyệt", description: (error as Error).message, });
         } finally {
             setIsApprovingUser(null);
@@ -226,12 +247,31 @@ const UsersManagement = () => {
     const handleRejectUser = async (userId: string, userName: string) => {
         setIsApprovingUser(userId);
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await supabase.from('profiles').update({ account_status: 'REJECTED' } as any).eq('id', userId);
+            // Get the registration record
+            const { data: regData } = await supabase
+                .from('user_registrations')
+                .select('id')
+                .eq('user_id', userId)
+                .single();
+
+            if (!regData) {
+                toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy record đăng ký.", });
+                setIsApprovingUser(null);
+                return;
+            }
+
+            // Call the reject RPC function
+            const { error } = await supabase.rpc('reject_user_registration', {
+                p_registration_id: regData.id,
+                p_rejection_reason: 'Từ chối từ Admin'
+            });
+
+            if (error) throw error;
 
             toast({ title: "Từ chối thành công", description: `Tài khoản ${userName} đã bị từ chối.`, });
             await fetchUsers();
         } catch (error) {
+            console.error('Lỗi từ chối:', error);
             toast({ variant: "destructive", title: "Lỗi từ chối", description: (error as Error).message, });
         } finally {
             setIsApprovingUser(null);
@@ -319,14 +359,15 @@ const UsersManagement = () => {
             resetFormData();
             await fetchUsers();
         } catch (error) {
-            console.error("Lỗi cập nhật user:", error);
-            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: (error as Error).message });
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Lỗi cập nhật user:", errorMessage);
+            toast({ variant: "destructive", title: "Lỗi cập nhật user", description: errorMessage });
         } finally {
             setLoading(false);
         }
     };
 
-    // --- LOGIC XÓA NGƯỜI DÙNG ---
+    // --- LOGIC XÓA NGƯ��I DÙNG ---
     const handleDeleteUser = async (user: UserDetail) => {
         setUserToDelete(user);
         setIsDeleteConfirmOpen(true);
@@ -889,7 +930,7 @@ const UsersManagement = () => {
                         </div>
 
                         <div>
-                            <Label htmlFor="edit-phone">Số điện thoại *</Label>
+                            <Label htmlFor="edit-phone">Số điện tho��i *</Label>
                             <Input
                                 id="edit-phone"
                                 type="tel"

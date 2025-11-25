@@ -26,6 +26,7 @@ const Tasks = () => {
   const [teamId, setTeamId] = useState<string>('');
   const [creatorData, setCreatorData] = useState<Record<string, any>>({});
   const [assigneeData, setAssigneeData] = useState<Record<string, any>>({});
+  const [activeTab, setActiveTab] = useState<string>('board');
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -59,9 +60,9 @@ const Tasks = () => {
   }, []);
 
   return (
-    <DashboardLayout role={role}>
+    <DashboardLayout role={role} tasksSection={activeTab} onTasksSectionChange={setActiveTab}>
       <div className="space-y-6 animate-fade-in pb-20 md:pb-6">
-        
+
         <div className="mb-2">
           <h2 className="text-4xl font-heading font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
             Công việc
@@ -69,7 +70,7 @@ const Tasks = () => {
           <p className="text-muted-foreground mt-2">Quản lý và theo dõi nhiệm vụ của bạn</p>
         </div>
 
-        <Tabs defaultValue="board" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
           {/* ======= TABS LIST ======= */}
           <TabsList className="bg-secondary shadow-soft flex flex-wrap h-auto gap-1 p-1">

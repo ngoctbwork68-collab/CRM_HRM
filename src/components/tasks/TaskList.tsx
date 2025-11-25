@@ -44,7 +44,8 @@ const TaskList = ({ role }: { role: UserRole }) => {
       if (error) throw error;
       setTasks(data || []);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error fetching tasks:', errorMessage);
     } finally {
       setLoading(false);
     }

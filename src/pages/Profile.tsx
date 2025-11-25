@@ -252,7 +252,8 @@ const Profile = () => {
             toast.success("Hồ sơ đã được cập nhật thành công! Đang chờ Admin/HR xem xét.");
             await loadProfile(); 
         } catch (error) {
-            console.error("Lỗi cập nhật hồ sơ:", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error("Lỗi cập nhật hồ sơ:", errorMessage);
             toast.error("Cập nhật hồ sơ thất bại.");
         } finally {
             setLoading(false);
@@ -356,7 +357,7 @@ const Profile = () => {
                 <Card className="shadow-2xl transition-all duration-500 hover:shadow-primary/30">
                     <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b rounded-t-xl">
                         <CardTitle className="text-2xl font-extrabold flex items-center gap-3 text-primary tracking-tight">
-                            <Info className="h-6 w-6" /> CÀI ĐẶT HỒ SƠ CÁ NHÂN
+                            <Info className="h-6 w-6" /> CÀI ĐẶT H��� SƠ CÁ NHÂN
                         </CardTitle>
                         <CardDescription>Quản lý thông tin cá nhân và tài liệu của bạn.</CardDescription>
                     </CardHeader>

@@ -146,22 +146,28 @@ const AttendanceManagement = () => {
       const { data, error } = await supabase
         .from('attendance_settings')
         .select('*')
-        .eq('team_id', teamId)
-        .single();
+        .eq('team_id', teamId);
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
-      if (data) {
+      if (data && data.length > 0) {
+        const settings = data[0];
         setLocationSettings({
-          lat: data.office_latitude || "",
-          lng: data.office_longitude || "",
-          radius: data.check_in_radius?.toString() || "100"
+          lat: settings.office_latitude || "",
+          lng: settings.office_longitude || "",
+          radius: settings.check_in_radius_meters?.toString() || "100"
         });
       }
     } catch (error) {
-      console.error('Error loading location settings:', error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error loading location settings:', errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: `Không thể tải cài đặt vị trí: ${errorMessage}`
+      });
     }
-  }, []);
+  }, [toast]);
 
   // Initial load
   useEffect(() => {
@@ -279,7 +285,7 @@ const AttendanceManagement = () => {
           team_id: selectedTeamId,
           office_latitude: parseFloat(locationSettings.lat) || null,
           office_longitude: parseFloat(locationSettings.lng) || null,
-          check_in_radius: parseInt(locationSettings.radius) || 100
+          check_in_radius_meters: parseInt(locationSettings.radius) || 100
         }, { onConflict: 'team_id' });
 
       if (error) throw error;
