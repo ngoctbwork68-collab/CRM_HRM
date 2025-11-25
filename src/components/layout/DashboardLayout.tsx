@@ -5,9 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
     LayoutDashboard, Users, CheckSquare, Calendar, LogOut, User,
-    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase
+    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase, DollarSign, LineChart
 } from "lucide-react";
 // Giả định các hàm này trả về các kiểu đã định nghĩa
 import { getCurrentUser, getUserProfile, signOut, UserRole, getUserRole } from "@/lib/auth";
