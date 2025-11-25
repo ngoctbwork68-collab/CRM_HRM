@@ -14,7 +14,9 @@ import Leave from "./pages/Leave";
 import Organization from "./pages/Organization";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import RegistrationApprovals from "./pages/admin/RegistrationApprovals";
+import Payroll from "./pages/Payroll";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
           <Route path="/meeting-rooms" element={<MeetingRooms />} />
           <Route path="/leave" element={<Leave />} />
           <Route path="/organization" element={<Organization />} />
+          <Route path="/payroll" element={<Payroll />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

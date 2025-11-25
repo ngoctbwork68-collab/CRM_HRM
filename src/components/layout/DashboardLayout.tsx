@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
     LayoutDashboard, Users, CheckSquare, Calendar, LogOut, User,
-    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase
+    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase, DollarSign
 } from "lucide-react";
 // Giả định các hàm này trả về các kiểu đã định nghĩa
 import { getCurrentUser, getUserProfile, signOut, UserRole, getUserRole } from "@/lib/auth";
@@ -47,6 +47,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
         { icon: Clock, label: "Chấm công", path: "/attendance" },
         { icon: ListChecks, label: "Công việc", path: "/tasks" },
         { icon: Calendar, label: "Phòng họp", path: "/meeting-rooms" },
+        { icon: DollarSign, label: "Lương Thưởng", path: "/payroll" },
     ];
 
     const menuItems = [...baseMenuItems];
