@@ -10,7 +10,7 @@ import {
     LayoutDashboard, Users, CheckSquare, Calendar, LogOut, User,
     Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase, DollarSign, LineChart
 } from "lucide-react";
-// Giả định các hàm này trả về các kiểu đã định nghĩa
+// Giả định các hàm này trả về các kiểu đã đ��nh nghĩa
 import { getCurrentUser, getUserProfile, signOut, UserRole, getUserRole } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import NotificationBell from "@/components/notifications/NotificationBell";
@@ -35,7 +35,7 @@ interface DashboardLayoutProps {
     onOrganizationSectionChange?: (section: string) => void;
 }
 
-const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, role = 'staff', organizationSection, onOrganizationSectionChange }: DashboardLayoutProps) => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -43,6 +43,7 @@ const DashboardLayout = ({ children, role = 'staff' }: DashboardLayoutProps) => 
     const [userRole, setUserRole] = useState<UserRole>(role);
     const [isDark, setIsDark] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [expandedOrg, setExpandedOrg] = useState(organizationSection || 'teams');
 
     // --- LOGIC MENU ITEMS ---
     const baseMenuItems: NavItem[] = [
