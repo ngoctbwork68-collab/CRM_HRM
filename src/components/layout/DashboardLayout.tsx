@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
     LayoutDashboard, Users, CheckSquare, Calendar, LogOut, User,
-    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase
+    Moon, Sun, Clock, Settings, Menu, X, ListChecks, FileText, Briefcase, DollarSign
 } from "lucide-react";
 // Giả định các hàm này trả về các kiểu đã định nghĩa
 import { getCurrentUser, getUserProfile, signOut, UserRole, getUserRole } from "@/lib/auth";
