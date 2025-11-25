@@ -756,6 +756,8 @@ export type Database = {
       leave_type: "annual" | "sick" | "personal" | "unpaid"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "review" | "done"
+      report_status: "submitted" | "pending_review" | "approved" | "rejected"
+      meeting_status: "draft" | "completed" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
