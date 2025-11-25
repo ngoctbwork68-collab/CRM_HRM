@@ -146,16 +146,16 @@ const AttendanceManagement = () => {
       const { data, error } = await supabase
         .from('attendance_settings')
         .select('*')
-        .eq('team_id', teamId)
-        .single();
+        .eq('team_id', teamId);
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
-      if (data) {
+      if (data && data.length > 0) {
+        const settings = data[0];
         setLocationSettings({
-          lat: data.office_latitude || "",
-          lng: data.office_longitude || "",
-          radius: data.check_in_radius_meters?.toString() || "100"
+          lat: settings.office_latitude || "",
+          lng: settings.office_longitude || "",
+          radius: settings.check_in_radius_meters?.toString() || "100"
         });
       }
     } catch (error) {
@@ -167,7 +167,7 @@ const AttendanceManagement = () => {
         description: `Không thể tải cài đặt vị trí: ${errorMessage}`
       });
     }
-  }, []);
+  }, [toast]);
 
   // Initial load
   useEffect(() => {
