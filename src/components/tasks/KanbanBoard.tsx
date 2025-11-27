@@ -558,6 +558,8 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                                 teamId={teamId}
                                 selectedGroupId={selectedGroupId}
                                 selectedSpaceId={selectedSpaceId}
+                                groups={groups}
+                                spaces={spaces}
                                 onCreateTask={createTask}
                                 onUpdateTask={updateTask}
                                 onDeleteTask={deleteTask}
@@ -708,7 +710,7 @@ const KanbanColumn = ({
                                         <SelectItem value="low">Low (Thấp)</SelectItem>
                                         <SelectItem value="medium">Medium (Trung bình)</SelectItem>
                                         <SelectItem value="high">High (Cao)</SelectItem>
-                                        <SelectItem value="urgent">Urgent (Khẩn c��p)</SelectItem>
+                                        <SelectItem value="urgent">Urgent (Khẩn cấp)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
