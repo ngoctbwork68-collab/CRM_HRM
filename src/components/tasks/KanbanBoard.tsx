@@ -108,7 +108,7 @@ const useBoard = (teamId: string) => {
             return createdTask;
         } catch (error) {
             console.error('Error creating task:', error);
-            toast({ title: 'Lỗi', description: 'Không tạo được công việc', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Không tạo đư��c công việc', variant: 'destructive' });
         }
     }, [toast]);
 
@@ -655,6 +655,8 @@ const KanbanColumn = ({
                         key={task.id}
                         task={task}
                         users={users}
+                        groups={[]}
+                        spaces={[]}
                         onUpdate={onUpdateTask}
                         onDelete={onDeleteTask}
                     />
@@ -892,7 +894,7 @@ const TaskCard = ({ task, users, groups, spaces, onUpdate, onDelete }: TaskCardP
                     <DialogHeader>
                         <DialogTitle>Xác nhận Xóa Công việc</DialogTitle>
                         <DialogDescription>
-                            Bạn c�� chắc chắn muốn xóa công việc "{task.title}" không? Hành động này không thể hoàn tác.
+                            Bạn có chắc chắn muốn xóa công việc "{task.title}" không? Hành động này không thể hoàn tác.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
