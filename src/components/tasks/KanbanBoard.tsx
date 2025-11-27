@@ -770,6 +770,23 @@ const TaskCard = ({ task, users, groups, spaces, onUpdate, onDelete }: TaskCardP
             <Card className="bg-white dark:bg-gray-700 border-l-4 border-gray-200 dark:border-gray-600 hover:shadow-lg cursor-pointer transition-all" onClick={() => setIsOpen(true)}>
                 <CardContent className="p-3 space-y-2">
                     <h4 className="text-sm font-medium line-clamp-2 dark:text-white">{task.title}</h4>
+
+                    {/* Space and Group Info */}
+                    {(space || group) && (
+                        <div className="flex flex-wrap gap-1">
+                            {space && (
+                                <Badge variant="outline" className="text-xs bg-cyan-50 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700">
+                                    {space.name}
+                                </Badge>
+                            )}
+                            {group && !space && (
+                                <Badge variant="outline" className="text-xs">
+                                    {group.name}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex flex-wrap gap-1 items-center">
                         <Badge className={`text-xs ${priorityColors[task.priority]} font-semibold`} variant="secondary">
                             {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
