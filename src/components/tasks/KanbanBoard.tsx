@@ -473,7 +473,7 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                             className="text-xs"
                         >
                             <X className="h-4 w-4 mr-1" />
-                            Xóa lọc
+                            X��a lọc
                         </Button>
                     )}
                 </div>
@@ -622,6 +622,9 @@ const KanbanColumn = ({
                 assignee_id: null,
                 creator_id: userId,
                 team_id: teamId,
+                group_id: selectedGroupId || null,
+                space_id: selectedSpaceId || null,
+                field_id: null,
                 status: status.value
             });
             setTaskTitle('');
