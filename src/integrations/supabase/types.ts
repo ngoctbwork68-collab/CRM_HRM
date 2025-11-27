@@ -413,8 +413,11 @@ export type Database = {
           creator_id: string
           deadline: string | null
           description: string | null
+          field_id: string | null
+          group_id: string | null
           id: string
           priority: Database["public"]["Enums"]["task_priority"]
+          space_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           team_id: string | null
           title: string
@@ -427,8 +430,11 @@ export type Database = {
           creator_id: string
           deadline?: string | null
           description?: string | null
+          field_id?: string | null
+          group_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          space_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           team_id?: string | null
           title: string
@@ -441,8 +447,11 @@ export type Database = {
           creator_id?: string
           deadline?: string | null
           description?: string | null
+          field_id?: string | null
+          group_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          space_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           team_id?: string | null
           title?: string
@@ -454,6 +463,27 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
             referencedColumns: ["id"]
           },
         ]
@@ -484,6 +514,153 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          leader_id: string | null
+          name: string
+          position: number | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          name: string
+          position?: number | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          name?: string
+          position?: number | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groups_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spaces: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          group_id: string
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position?: number | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaces_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spaces_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

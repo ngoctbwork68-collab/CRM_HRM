@@ -38,6 +38,9 @@ interface Task {
     creator_id: string;
     team_id: string | null;
     status: 'todo' | 'in_progress' | 'review' | 'done';
+    group_id: string | null;
+    space_id: string | null;
+    field_id: string | null;
     created_at: string;
     updated_at: string;
     completed_at: string | null;
@@ -184,6 +187,22 @@ const useBoard = (teamId: string) => {
     };
 };
 
+interface Group {
+    id: string;
+    name: string;
+    description?: string;
+    color?: string;
+    leader_id?: string;
+}
+
+interface Space {
+    id: string;
+    group_id: string;
+    name: string;
+    description?: string;
+    color?: string;
+}
+
 interface KanbanBoardProps {
     teamId: string;
     userId: string;
@@ -220,24 +239,132 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
         getTasksInStatus
     } = useBoard(teamId);
 
+    // Group and Space states
+    const [groups, setGroups] = useState<Group[]>([]);
+    const [spaces, setSpaces] = useState<Space[]>([]);
+    const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+    const [selectedSpaceId, setSelectedSpaceId] = useState<string>('');
+    const [groupsLoading, setGroupsLoading] = useState(true);
+
     // Search and filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [assigneeFilter, setAssigneeFilter] = useState('all');
 
-    // Filter tasks based on search and filters
+    // Fetch groups and spaces
+    useEffect(() => {
+        const fetchGroupsAndSpaces = async () => {
+            try {
+                setGroupsLoading(true);
+                const { data: groupsData, error: groupsError } = await supabase
+                    .from('groups')
+                    .select('*')
+                    .eq('team_id', teamId)
+                    .eq('is_active', true)
+                    .order('position', { ascending: true });
+
+                if (groupsError) {
+                    console.error('Groups fetch error:', groupsError.message, groupsError);
+                    throw new Error(`Failed to fetch groups: ${groupsError.message}`);
+                }
+
+                const fetchedGroups = (groupsData || []) as Group[];
+                setGroups(fetchedGroups);
+
+                if (fetchedGroups.length > 0 && !selectedGroupId) {
+                    const defaultGroup = fetchedGroups[0];
+                    setSelectedGroupId(defaultGroup.id);
+
+                    const { data: spacesData, error: spacesError } = await supabase
+                        .from('spaces')
+                        .select('*')
+                        .eq('group_id', defaultGroup.id)
+                        .eq('is_active', true)
+                        .order('position', { ascending: true });
+
+                    if (spacesError) {
+                        console.error('Spaces fetch error:', spacesError.message, spacesError);
+                        throw new Error(`Failed to fetch spaces: ${spacesError.message}`);
+                    }
+
+                    const fetchedSpaces = (spacesData || []) as Space[];
+                    setSpaces(fetchedSpaces);
+                    if (fetchedSpaces.length > 0) {
+                        setSelectedSpaceId(fetchedSpaces[0].id);
+                    }
+                } else if (fetchedGroups.length === 0) {
+                    console.warn('No groups found for team:', teamId);
+                }
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Error fetching groups and spaces:', errorMessage);
+                toast({
+                    title: 'Lỗi',
+                    description: errorMessage || 'Không tải được nhóm và không gian',
+                    variant: 'destructive'
+                });
+                setGroups([]);
+                setSpaces([]);
+            } finally {
+                setGroupsLoading(false);
+            }
+        };
+
+        if (teamId) {
+            fetchGroupsAndSpaces();
+        }
+    }, [teamId, toast]);
+
+    // Handle group change
+    const handleGroupChange = async (groupId: string) => {
+        setSelectedGroupId(groupId);
+        setSelectedSpaceId('');
+
+        try {
+            const { data: spacesData, error } = await supabase
+                .from('spaces')
+                .select('*')
+                .eq('group_id', groupId)
+                .eq('is_active', true)
+                .order('position', { ascending: true });
+
+            if (error) {
+                console.error('Spaces fetch error:', error.message, error);
+                throw new Error(`Failed to fetch spaces: ${error.message}`);
+            }
+
+            const fetchedSpaces = (spacesData || []) as Space[];
+            setSpaces(fetchedSpaces);
+            if (fetchedSpaces.length > 0) {
+                setSelectedSpaceId(fetchedSpaces[0].id);
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('Error fetching spaces:', errorMessage);
+            toast({
+                title: 'Lỗi',
+                description: errorMessage || 'Không tải được không gian',
+                variant: 'destructive'
+            });
+            setSpaces([]);
+        }
+    };
+
+    // Filter tasks based on search, group, space, and other filters
     const filteredTasks = useMemo(() => {
         return tasks.filter(task => {
             const matchesSearch = searchQuery === '' ||
                 task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
+            const matchesGroup = !selectedGroupId || task.group_id === selectedGroupId;
+            const matchesSpace = !selectedSpaceId || task.space_id === selectedSpaceId;
             const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
             const matchesAssignee = assigneeFilter === 'all' || task.assignee_id === assigneeFilter;
 
-            return matchesSearch && matchesPriority && matchesAssignee;
+            return matchesSearch && matchesGroup && matchesSpace && matchesPriority && matchesAssignee;
         });
-    }, [tasks, searchQuery, priorityFilter, assigneeFilter]);
+    }, [tasks, searchQuery, selectedGroupId, selectedSpaceId, priorityFilter, assigneeFilter]);
 
     const uniquePriorities = useMemo(() =>
         ['all', ...new Set(tasks.map(t => t.priority))],
@@ -278,6 +405,87 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
 
     return (
         <div className="space-y-4">
+            {/* Group and Space Selection Controls - Only show if groups exist */}
+            {groups.length > 0 && (
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                        <h3 className="text-sm font-semibold text-muted-foreground">Chọn Nhóm & Không Gian</h3>
+                        {(selectedGroupId || selectedSpaceId) && (
+                            <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                if (groups.length > 0) {
+                                    setSelectedGroupId(groups[0].id);
+                                }
+                                setSelectedSpaceId('');
+                            }}
+                            className="text-xs"
+                        >
+                                <X className="h-3 w-3 mr-1" />
+                                Đặt lại
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Group Selector */}
+                        {groups.length > 0 && (
+                            <Select value={selectedGroupId || ''} onValueChange={handleGroupChange}>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                    <SelectValue placeholder="Chọn Nhóm..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {groups.map(group => (
+                                        <SelectItem key={group.id} value={group.id}>
+                                            <span className="flex items-center gap-2">
+                                                <span
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{ backgroundColor: `var(--color-${group.color || 'blue'})` }}
+                                                ></span>
+                                                {group.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+
+                        {/* Space Selector */}
+                        {spaces.length > 0 && (
+                            <Select value={selectedSpaceId || '__all__'} onValueChange={(value) => setSelectedSpaceId(value === '__all__' ? '' : value)}>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                    <SelectValue placeholder="Chọn Không Gian..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__all__">Tất cả Không Gian</SelectItem>
+                                    {spaces.map(space => (
+                                        <SelectItem key={space.id} value={space.id}>
+                                            <span className="flex items-center gap-2">
+                                                <span
+                                                    className="w-2 h-2 rounded-full"
+                                                    style={{ backgroundColor: `var(--color-${space.color || 'cyan'})` }}
+                                                ></span>
+                                                {space.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+
+                    {selectedGroupId && (
+                        <div className="text-xs text-muted-foreground">
+                            Nhóm: <span className="font-semibold">{groups.find(g => g.id === selectedGroupId)?.name}</span>
+                            {selectedSpaceId && (
+                                <> • Không gian: <span className="font-semibold">{spaces.find(s => s.id === selectedSpaceId)?.name}</span></>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Search and Filter Controls */}
             <div className="bg-secondary/50 p-4 rounded-lg space-y-3">
                 <div className="flex items-center justify-between">
@@ -373,6 +581,10 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                                 userId={userId}
                                 users={users}
                                 teamId={teamId}
+                                selectedGroupId={selectedGroupId}
+                                selectedSpaceId={selectedSpaceId}
+                                groups={groups}
+                                spaces={spaces}
                                 onCreateTask={createTask}
                                 onUpdateTask={updateTask}
                                 onDeleteTask={deleteTask}
@@ -390,6 +602,10 @@ interface KanbanColumnProps {
     tasks: Task[];
     userId: string;
     teamId: string;
+    selectedGroupId: string;
+    selectedSpaceId: string;
+    groups: Group[];
+    spaces: Space[];
     users: Array<{ id: string; first_name?: string; last_name?: string; avatar_url?: string | null }>;
     onCreateTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'completed_at'>) => Promise<Task | undefined>;
     onUpdateTask: (taskId: string, updates: Partial<Task>) => Promise<Task | undefined>;
@@ -401,6 +617,10 @@ const KanbanColumn = ({
     tasks,
     userId,
     teamId,
+    selectedGroupId,
+    selectedSpaceId,
+    groups,
+    spaces,
     users,
     onCreateTask,
     onUpdateTask,
@@ -433,6 +653,9 @@ const KanbanColumn = ({
                 assignee_id: null,
                 creator_id: userId,
                 team_id: teamId,
+                group_id: selectedGroupId || null,
+                space_id: selectedSpaceId || null,
+                field_id: null,
                 status: status.value
             });
             setTaskTitle('');
@@ -463,6 +686,8 @@ const KanbanColumn = ({
                         key={task.id}
                         task={task}
                         users={users}
+                        groups={groups}
+                        spaces={spaces}
                         onUpdate={onUpdateTask}
                         onDelete={onDeleteTask}
                     />
@@ -530,17 +755,21 @@ const KanbanColumn = ({
 interface TaskCardProps {
     task: Task;
     users: Array<{ id: string; first_name?: string; last_name?: string; avatar_url?: string | null }>;
+    groups: Group[];
+    spaces: Space[];
     onUpdate: (taskId: string, updates: Partial<Task>) => Promise<Task | undefined>;
     onDelete: (taskId: string) => Promise<void>;
 }
 
-const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
+const TaskCard = ({ task, users, groups, spaces, onUpdate, onDelete }: TaskCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [formData, setFormData] = useState(task);
     const [isLoading, setIsLoading] = useState(false);
 
     const assignee = users.find(u => u.id === task.assignee_id);
+    const group = groups.find(g => g.id === task.group_id);
+    const space = spaces.find(s => s.id === task.space_id);
 
     const handleSave = async () => {
         setIsLoading(true);
@@ -572,6 +801,23 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
             <Card className="bg-white dark:bg-gray-700 border-l-4 border-gray-200 dark:border-gray-600 hover:shadow-lg cursor-pointer transition-all" onClick={() => setIsOpen(true)}>
                 <CardContent className="p-3 space-y-2">
                     <h4 className="text-sm font-medium line-clamp-2 dark:text-white">{task.title}</h4>
+
+                    {/* Space and Group Info */}
+                    {(space || group) && (
+                        <div className="flex flex-wrap gap-1">
+                            {space && (
+                                <Badge variant="outline" className="text-xs bg-cyan-50 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700">
+                                    {space.name}
+                                </Badge>
+                            )}
+                            {group && !space && (
+                                <Badge variant="outline" className="text-xs">
+                                    {group.name}
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex flex-wrap gap-1 items-center">
                         <Badge className={`text-xs ${priorityColors[task.priority]} font-semibold`} variant="secondary">
                             {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
@@ -673,6 +919,40 @@ const TaskCard = ({ task, users, onUpdate, onDelete }: TaskCardProps) => {
                                 disabled={isLoading}
                             />
                         </div>
+                        <div>
+                            <Label htmlFor="edit-group">Nhóm</Label>
+                            <Select value={formData.group_id || '__none__'} onValueChange={(v) => setFormData({ ...formData, group_id: v === '__none__' ? null : v, space_id: null })}>
+                                <SelectTrigger id="edit-group">
+                                    <SelectValue placeholder="Chọn Nhóm" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">Không có nhóm</SelectItem>
+                                    {groups.map(group => (
+                                        <SelectItem key={group.id} value={group.id}>
+                                            {group.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {formData.group_id && spaces.filter(s => s.group_id === formData.group_id).length > 0 && (
+                            <div>
+                                <Label htmlFor="edit-space">Không Gian</Label>
+                                <Select value={formData.space_id || '__none__'} onValueChange={(v) => setFormData({ ...formData, space_id: v === '__none__' ? null : v })}>
+                                    <SelectTrigger id="edit-space">
+                                        <SelectValue placeholder="Chọn Không Gian" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none__">Không có không gian</SelectItem>
+                                        {spaces.filter(s => s.group_id === formData.group_id).map(space => (
+                                            <SelectItem key={space.id} value={space.id}>
+                                                {space.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter className="flex justify-between pt-4">
                         <DialogTrigger asChild>
