@@ -198,33 +198,40 @@ CREATE POLICY "Users can manage group members" ON public.group_members
 -- 9. CREATE DEFAULT GROUP FOR EACH TEAM (if not exists)
 -- ============================================================================
 
-INSERT INTO public.groups (team_id, name, description, color, position, is_active)
-SELECT DISTINCT
-  id as team_id,
-  'Default Group' as name,
-  'Default group for team' as description,
-  'blue' as color,
-  0 as position,
-  TRUE as is_active
-FROM public.teams
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.groups WHERE team_id = teams.id
-)
-ON CONFLICT (team_id, name) DO NOTHING;
+-- Create default groups for teams (only if teams exist)
+DO $$
+BEGIN
+  INSERT INTO public.groups (team_id, name, description, color, position, is_active)
+  SELECT DISTINCT
+    id as team_id,
+    'Default Group' as name,
+    'Default group for team' as description,
+    'blue' as color,
+    0 as position,
+    TRUE as is_active
+  FROM public.teams
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.groups WHERE team_id = teams.id
+  )
+  ON CONFLICT (team_id, name) DO NOTHING;
 
--- Create default spaces for each default group
-INSERT INTO public.spaces (group_id, team_id, name, description, color, position, is_active)
-SELECT DISTINCT
-  g.id as group_id,
-  g.team_id,
-  'Default Space' as name,
-  'Default space for group' as description,
-  'cyan' as color,
-  0 as position,
-  TRUE as is_active
-FROM public.groups g
-WHERE g.name = 'Default Group'
-AND NOT EXISTS (
-  SELECT 1 FROM public.spaces WHERE group_id = g.id
-)
-ON CONFLICT (group_id, name) DO NOTHING;
+  -- Create default spaces for each default group
+  INSERT INTO public.spaces (group_id, team_id, name, description, color, position, is_active)
+  SELECT DISTINCT
+    g.id as group_id,
+    g.team_id,
+    'Default Space' as name,
+    'Default space for group' as description,
+    'cyan' as color,
+    0 as position,
+    TRUE as is_active
+  FROM public.groups g
+  WHERE g.name = 'Default Group'
+  AND NOT EXISTS (
+    SELECT 1 FROM public.spaces WHERE group_id = g.id
+  )
+  ON CONFLICT (group_id, name) DO NOTHING;
+EXCEPTION WHEN OTHERS THEN
+  -- If an error occurs (e.g., no teams exist), log it and continue
+  RAISE NOTICE 'Note: Could not create default groups/spaces: %', SQLERRM;
+END $$;
