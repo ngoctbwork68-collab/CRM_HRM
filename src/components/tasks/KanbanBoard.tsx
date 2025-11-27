@@ -328,19 +328,25 @@ export const KanbanBoard = ({ teamId, userId, users }: KanbanBoardProps) => {
                 .eq('is_active', true)
                 .order('position', { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Spaces fetch error:', error.message, error);
+                throw new Error(`Failed to fetch spaces: ${error.message}`);
+            }
+
             const fetchedSpaces = (spacesData || []) as Space[];
             setSpaces(fetchedSpaces);
             if (fetchedSpaces.length > 0) {
                 setSelectedSpaceId(fetchedSpaces[0].id);
             }
         } catch (error) {
-            console.error('Error fetching spaces:', error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('Error fetching spaces:', errorMessage);
             toast({
                 title: 'Lỗi',
-                description: 'Không tải được không gian',
+                description: errorMessage || 'Không tải được không gian',
                 variant: 'destructive'
             });
+            setSpaces([]);
         }
     };
 
