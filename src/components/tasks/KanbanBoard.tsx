@@ -650,17 +650,21 @@ const KanbanColumn = ({
                 </div>
             </CardHeader>
             <CardContent className="space-y-3">
-                {tasks.map(task => (
-                    <TaskCard
-                        key={task.id}
-                        task={task}
-                        users={users}
-                        groups={[]}
-                        spaces={[]}
-                        onUpdate={onUpdateTask}
-                        onDelete={onDeleteTask}
-                    />
-                ))}
+                {tasks.map(task => {
+                    const taskGroup = groups.find(g => g.id === task.group_id);
+                    const taskSpaces = task.group_id ? spaces.filter(s => s.group_id === task.group_id) : [];
+                    return (
+                        <TaskCard
+                            key={task.id}
+                            task={task}
+                            users={users}
+                            groups={taskGroup ? [taskGroup] : []}
+                            spaces={taskSpaces}
+                            onUpdate={onUpdateTask}
+                            onDelete={onDeleteTask}
+                        />
+                    );
+                })}
 
                 {tasks.length === 0 && (
                     <div className="text-center py-6 text-muted-foreground text-xs dark:text-gray-500">
