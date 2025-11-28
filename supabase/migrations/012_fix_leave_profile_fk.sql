@@ -17,7 +17,7 @@ At statement: 2
 
 -- 3.1 Cho phép người dùng tải lên/ghi đè CV của chính họ
 -- Ràng buộc: bucket_id = 'documents' và tên file bắt đầu bằng UID của user
-CREATE POLICY "Users can upload their own CV"
+CREATE OR REPLACE POLICY "Users can upload their own CV"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]

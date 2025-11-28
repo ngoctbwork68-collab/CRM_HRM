@@ -1,9 +1,4 @@
 -- ============================================================================
--- MIGRATION: 003_create_attendance_tables.sql
--- PURPOSE: Create attendance tracking and shift configuration tables
--- ============================================================================
-
--- ============================================================================
 -- 1. CREATE ATTENDANCE_SETTINGS TABLE
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.attendance_settings (
@@ -25,6 +20,16 @@ CREATE TABLE IF NOT EXISTS public.attendance_settings (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- BỔ SUNG FIX: Thêm các cột bị thiếu vào bảng đã tồn tại trên remote DB
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS auto_checkout_enabled BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS auto_checkout_time TIME DEFAULT '23:59:00';
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS max_hours_per_day NUMERIC(5, 2) DEFAULT 14.00;
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS office_latitude NUMERIC(9, 6);
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS office_longitude NUMERIC(9, 6);
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS check_in_radius_meters INTEGER DEFAULT 100;
+ALTER TABLE public.attendance_settings ADD COLUMN IF NOT EXISTS require_location_checkin BOOLEAN DEFAULT FALSE;
+
 
 INSERT INTO public.attendance_settings (auto_checkout_enabled, auto_checkout_time, max_hours_per_day)
 VALUES (TRUE, '23:59:00'::TIME, 14.00)
