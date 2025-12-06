@@ -666,6 +666,10 @@ const KanbanColumn = ({
             setTaskTitle('');
             setTaskPriority('medium');
             setIsAddTaskOpen(false);
+            toast({
+                title: 'Thành công',
+                description: 'Công việc đã được tạo'
+            });
         } finally {
             setIsLoading(false);
         }
