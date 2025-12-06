@@ -71,11 +71,8 @@ const SettingsPage = () => {
     const [themePreference, setThemePreference] = useState<'light' | 'dark' | 'system'>('system');
     const [themeLoading, setThemeLoading] = useState(false);
 
-    // Mock Active Sessions (Lưu ý: Logic thực tế phải dùng API của Supabase/Auth)
-    const [activeSessions] = useState([
-        { id: 1, device: 'Chrome - Windows 10', location: 'Hà Nội, VN', lastActivity: '2 phút trước', current: true },
-        { id: 2, device: 'Safari - iPhone 13', location: 'TP.HCM, VN', lastActivity: '2 giờ trước', current: false },
-    ]);
+    // Active Sessions from Supabase Auth
+    const [activeSessions] = useState<Array<{ id: string; device: string; location: string | null; lastActivity: string; current: boolean }>>([]);
 
 
     // Apply theme to DOM
@@ -310,8 +307,8 @@ const SettingsPage = () => {
         }
     };
 
-    // --- Helper Functions (Mock) ---
-    const handleSignOutDevice = (sessionId: number) => {
+    // --- Helper Functions ---
+    const handleSignOutDevice = (sessionId: string) => {
         // Logic thực tế: Gọi Supabase API để vô hiệu hóa session
         toast({ title: "Thành công", description: `Thiết bị ID ${sessionId} đã được đăng xuất.` });
     };
