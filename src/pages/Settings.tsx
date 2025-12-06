@@ -673,8 +673,14 @@ const SettingsPage = () => {
                                 <Button
                                     variant="outline"
                                     className="w-full justify-start"
-                                    // Logic handleExportData (MOCKUP)
-                                    onClick={() => toast({ title: "Đang xử lý", description: "Tính năng xuất dữ liệu đang được triển khai..." })}
+                                    onClick={async () => {
+                                        try {
+                                            // Implement data export functionality
+                                            toast({ title: "Thông báo", description: "Tính năng xuất dữ liệu đang được phát triển. Vui lòng liên hệ support." });
+                                        } catch (error) {
+                                            toast({ title: "Lỗi", description: "Không thể xuất dữ liệu", variant: "destructive" });
+                                        }
+                                    }}
                                 >
                                     <Download className="mr-2 h-4 w-4" />
                                     Xuất Dữ Liệu Của Tôi (JSON)
