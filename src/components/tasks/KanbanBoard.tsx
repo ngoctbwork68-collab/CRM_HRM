@@ -697,6 +697,7 @@ const KanbanColumn = ({
                         users={users}
                         groups={groups}
                         spaces={spaces}
+                        currentUserId={userId}
                         onUpdate={onUpdateTask}
                         onDelete={onDeleteTask}
                     />
